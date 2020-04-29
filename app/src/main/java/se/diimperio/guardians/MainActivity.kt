@@ -10,6 +10,11 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.solver.GoalRow
+
+const val COUNTDOWN_ACTIVATION_LENGTH:Long = 6000
+const val COUNTDOWN_PIN_LENGTH:Long = 10000
+const val TICK_LENGTH:Long = 1000
 
 class MainActivity() : AppCompatActivity() {
 
@@ -17,6 +22,7 @@ class MainActivity() : AppCompatActivity() {
     lateinit var defuseBttn:Button
     lateinit var countDownTextView:TextView
     lateinit var activationProgressCircle:ProgressBar
+    lateinit var countDownTimer: CountDownTimer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,33 +54,89 @@ class MainActivity() : AppCompatActivity() {
         defuseBttn.setOnClickListener {
             alarm.stateMachine.transition(Alarm.Event.AlarmDefused)
         }
-
     }
 
+    fun renderIdle(){
+
+        // - UI components
+        countDownTextView.visibility = GONE
+        activationProgressCircle.visibility = GONE
+        defuseBttn.visibility = GONE
+        triggerBttn.visibility = VISIBLE
+        menuBttn.visibility = VISIBLE
+
+        // - Logic
+        countDownTimer.cancel()
+
+        //Change button color back
+        //Change button sizd back
+        //Change backgroundcolor back
+    }
     fun renderActivating(){
 
+        // - UI Components
         countDownTextView.visibility = VISIBLE
         activationProgressCircle.visibility = VISIBLE
+        defuseBttn.visibility = GONE
+        triggerBttn.visibility = VISIBLE
 
-        val countDown = object : CountDownTimer(6000, 1000) {
-            override fun onTick(millisUntilFinished: Long) {
-                countDownTextView.text = (millisUntilFinished / 1000).toString()
-                activationProgressCircle.progress = (millisUntilFinished / 100).toInt()
-            }
-
-            override fun onFinish() {
-
-            }
-
-        }.start()
+        showCountDown(COUNTDOWN_ACTIVATION_LENGTH)
 
         //Animate progressbar pre trigger activation
         //Animate background color to red
         //Animate color change of trigger button
     }
-    fun renderIdle(){
+    fun renderActivated(){
         countDownTextView.visibility = GONE
         activationProgressCircle.visibility = GONE
+        defuseBttn.visibility = GONE
+        triggerBttn.visibility = VISIBLE
 
+        //ScaleTriggerToScreenSize
+        //Initiallize button pulsating animation
+    }
+
+    fun renderDefusing(){
+        triggerBttn.visibility = GONE
+        countDownTextView.visibility = VISIBLE
+        defuseBttn.visibility = GONE
+        activationProgressCircle.visibility = GONE
+
+        showCountDown(COUNTDOWN_PIN_LENGTH)
+
+        //Show fragment with touchpad to enter PIN to defuse
+        //Show CountDownTimer 10 seconds
+        //Deactivate physical buttons to deter closing app to avoid alarm or switching off phone
+    }
+    fun renderAlarming(){
+        triggerBttn.visibility = GONE
+        countDownTextView.visibility = VISIBLE
+        defuseBttn.visibility = GONE
+        activationProgressCircle.visibility = GONE
+
+        //Flash screen at highest brightness between RED and White to attract attention
+        //Play Siren att highest possible volume.
+        //Deactivate physical buttons to deter closing app / Switching phone off
+    }
+    fun renderAlarmingDefusable(){
+        triggerBttn.visibility = GONE
+        countDownTextView.visibility = GONE
+        defuseBttn.visibility = VISIBLE
+        activationProgressCircle.visibility = GONE
+        //Show defuse button to allow defusing of alarm with pin
+    }
+    fun showCountDown(length:Long){
+
+        countDownTimer = object : CountDownTimer(length, TICK_LENGTH) {
+            override fun onTick(millisUntilFinished: Long) {
+                countDownTextView.text = (millisUntilFinished / 1000).toString()
+                activationProgressCircle.progress = (1000 / millisUntilFinished * 100).toInt()
+            }
+
+            override fun onFinish() {
+                countDownTimer.cancel()
+            }
+
+        }.start()
     }
 }

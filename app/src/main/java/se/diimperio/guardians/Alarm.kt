@@ -1,6 +1,7 @@
 package se.diimperio.guardians
 
 import android.os.Handler
+import android.util.Log
 import com.tinder.StateMachine
 
 const val STATE_TIMER = "STATE_TIMER"
@@ -41,22 +42,19 @@ class Alarm(mainView : MainActivity) {
         initialState(State.Idle)
 
         val handler = Handler()
-        val runDelayedTransitionToActivatedState = object : Runnable {
+        val transitionToActivatedState = object : Runnable {
             override fun run() {
-                transition(Event.AlarmButtonReleased)
-                println("in delayed button released")
+                transition(Event.AlarmButtonActivated)
             }
         }
-        val runDelayedTransitionToAlarmTriggered = object : Runnable {
+        val transitionToAlarmTriggered = object : Runnable {
             override fun run() {
                 transition(Event.AlarmTriggered)
-                println("in delayed trigger alarm")
             }
         }
-        val runDelayedTransitionToAlarmSetDefusable = object : Runnable {
+        val transitionAlarmToDefusableState = object : Runnable {
             override fun run() {
                 transition(Event.AlarmSetDefusable)
-                println("in delayed set defusable")
             }
         }
 
@@ -68,7 +66,6 @@ class Alarm(mainView : MainActivity) {
         }
 
         state<State.Activating> {
-
             on<Event.AlarmButtonActivated> {
                 transitionTo(State.Activated, SideEffect.AlarmButtonWasActivated)
             }
@@ -94,14 +91,14 @@ class Alarm(mainView : MainActivity) {
         }
 
         state<State.Alarming> {
-            on<Event.AlarmDefused> {
-                transitionTo(State.Idle, SideEffect.AlarmHasBeenDefused)
+            on<Event.AlarmSetDefusable> {
+                transitionTo(State.AlarmingDefusable, SideEffect.AlarmHasBeenMadeDefusable)
             }
         }
 
         state<State.AlarmingDefusable> {
-            on<Event.AlarmSetDefusable> {
-                transitionTo(State.AlarmingDefusable, SideEffect.AlarmHasBeenMadeDefusable)
+            on<Event.AlarmDefused> {
+                transitionTo(State.Idle, SideEffect.AlarmHasBeenDefused)
             }
         }
 
@@ -113,18 +110,20 @@ class Alarm(mainView : MainActivity) {
             when (validTransition.sideEffect) {
 
                 SideEffect.AlarmButtonWasPressed -> {
-                    println("button pressed")
-                    mainView.renderActivating()
 
-                    handler.postDelayed(runDelayedTransitionToActivatedState, 6000)
+                    Log.d("STATE_MACHINE", "AlarmButton Pressed")
+
+                    handler.postDelayed(transitionToActivatedState, 5000)
+                    mainView.renderActivating()
 
                 }
 
                 SideEffect.AlarmButtonWasActivated -> {
-                    println("alarm button activated")
 
-                    //ScaleTriggerToScreenSize
-                    //Initiallize button pulsating animation
+                    Log.d("STATE_MACHINE", "AlarmButton trigger is now active")
+
+                    mainView.renderActivated()
+
                     //Set up connection to firebase
                     //Update GPS location to firebase every X minutes
                 }
@@ -132,55 +131,49 @@ class Alarm(mainView : MainActivity) {
                 SideEffect.AlarmButtonWasReleased -> {
                     when (it.fromState) {
                         State.Activating -> {
-                            println("alarm button released safely in state :${validTransition.fromState}")
+                            Log.d("STATE_MACHINE", "AlarmButton trigger released before activating")
 
-                            handler.removeCallbacks(runDelayedTransitionToActivatedState)
                             mainView.renderIdle()
 
-
-
-                            //Deanimate background to default color
-                            //Deanimate progressbar around trigger button
-                            //Deanimate button to default color
+                            handler.removeCallbacks(transitionToActivatedState)
                         }
-                        State.Activated -> {
-                            println("alarm button triggered entering state:${validTransition.toState}")
-                            //Show Defuse Fragment
-                            //Show CountDownTimer
-                            //Deactivate physical buttons to deter closing app to avoid alarm
-                            //Start firebase countdown to trigger alarm. so in case phone is broken/switched off.. alarm still goes off.
 
-                            handler.postDelayed(runDelayedTransitionToAlarmTriggered, 10000)
+                        State.Activated -> {
+                            Log.d("STATE_MACHINE", "Alarm has been activated. 10 seconds to defuse")
+
+                            mainView.renderDefusing()
+
+                            //Start firebase countdown to trigger alarm. so in case phone is broken/switched off.. alarm still goes off.
+                            handler.postDelayed(transitionToAlarmTriggered, 10000)
                         }
                     }
                 }
 
                 SideEffect.AlarmHasBeenDefused -> {
 
-                    println("alarm defused safely in state")
-                    handler.removeCallbacks(runDelayedTransitionToAlarmTriggered)
+                    Log.d("STATE_MACHINE", "Alarm has been defused")
+                    handler.removeCallbacks(transitionToAlarmTriggered)
 
-                    //Return to main activity
-                    //Animate background back to default color
-
+                    mainView.renderIdle()
+                    //Notify firebase Alarm Has been defused
                 }
 
                 SideEffect.AlarmHasBeenTriggered -> {
-                    println("alarm has been triggered - contact ICE contacts current state :${validTransition.toState}")
+                    Log.d("STATE_MACHINE", "Alarm is now active. Notifying ICE contacts")
 
                     //Set off Alarm to contacts
-                    //Flash screen at highest brightness between RED and White to attract attention
-                    //Play Siren att highest possible volume.
-                    //Deactivate physical buttons to deter closing app / Switching phone off
                     //Update current location to firebase and Alert anyone in near proximity with app. approx 1km radius from alarm trigger location
 
-                    handler.postDelayed(runDelayedTransitionToAlarmSetDefusable, 10000)
+                    mainView.renderAlarming()
+
+                    handler.postDelayed(transitionAlarmToDefusableState, 10000)
+
                 }
                 SideEffect.AlarmHasBeenMadeDefusable -> {
 
-                    println("alarm is still triggered but defusable state is: ${validTransition.toState}")
+                    Log.d("STATE_MACHINE", "Alarm has changed to a defusable state")
 
-                    //Show Button to display defuse fragment
+                    mainView.renderAlarmingDefusable()
 
                 }
             }
