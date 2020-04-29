@@ -33,16 +33,31 @@
     <ProgressBar
         android:id="@+id/activatingProgressBar"
         style="?android:attr/progressBarStyle"
-        android:layout_width="220dp"
-        android:layout_height="220dp"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
         android:indeterminateDrawable="@drawable/activating_progress_bar"
         app:layout_constraintBottom_toTopOf="@+id/defuse_button"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.097" />
+        app:layout_constraintVertical_bias="0.078"
+        android:visibility="gone"
+        android:max="100"
+        android:progress="0"/>
 
+    <TextView
+        android:id="@+id/counter_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="40sp"
+        app:layout_constraintBottom_toTopOf="@+id/alarm_trigger"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.79"
+        tools:text="00"
+        android:visibility="gone"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

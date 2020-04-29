@@ -1,12 +1,11 @@
 package se.diimperio.guardians
 
-import android.os.CountDownTimer
+import android.os.Handler
 import com.tinder.StateMachine
-import java.util.*
-import java.util.concurrent.CountDownLatch
-import kotlin.concurrent.schedule
 
-class Alarm() {
+const val STATE_TIMER = "STATE_TIMER"
+
+class Alarm(mainView : MainActivity) {
 
     sealed class State {
         object Idle : State()
@@ -18,96 +17,111 @@ class Alarm() {
     }
 
     sealed class Event {
-        object TriggerPressed : Event()
-        object TriggerActivated : Event()
-        object TriggerReleased : Event()
+        object AlarmButtonPressed : Event()
+        object AlarmButtonActivated : Event()
+        object AlarmButtonReleased : Event()
         object AlarmTriggered : Event()
         object AlarmDefused : Event()
-        object AlarmDefusable : Event()
+        object AlarmSetDefusable : Event()
 
     }
 
     sealed class SideEffect {
-        object LogTriggerPressed : SideEffect()
-        object LogTriggerActivate : SideEffect()
-        object LogTriggerReleased : SideEffect()
-        object LogAlarmTriggered : SideEffect()
-        object LogAlarmDefused : SideEffect()
-        object LogAlarmDefusable : SideEffect()
+        object AlarmButtonWasPressed : SideEffect()
+        object AlarmButtonWasActivated : SideEffect()
+        object AlarmButtonWasReleased : SideEffect()
+        object AlarmHasBeenTriggered : SideEffect()
+        object AlarmHasBeenDefused : SideEffect()
+        object AlarmHasBeenMadeDefusable : SideEffect()
     }
 
-    val timer = Timer("ACTIVATING")
+
 
     var stateMachine = StateMachine.create<State, Event, SideEffect> {
         initialState(State.Idle)
 
-        /************** IDLE **************/
-        state<State.Idle> {
-            on<Event.TriggerPressed> {
-                transitionTo(State.Activating, SideEffect.LogTriggerPressed)
+        val handler = Handler()
+        val runDelayedTransitionToActivatedState = object : Runnable {
+            override fun run() {
+                transition(Event.AlarmButtonReleased)
+                println("in delayed button released")
+            }
+        }
+        val runDelayedTransitionToAlarmTriggered = object : Runnable {
+            override fun run() {
+                transition(Event.AlarmTriggered)
+                println("in delayed trigger alarm")
+            }
+        }
+        val runDelayedTransitionToAlarmSetDefusable = object : Runnable {
+            override fun run() {
+                transition(Event.AlarmSetDefusable)
+                println("in delayed set defusable")
             }
         }
 
-        /************** ACTIVATING **************/
+
+        state<State.Idle> {
+            on<Event.AlarmButtonPressed> {
+                transitionTo(State.Activating, SideEffect.AlarmButtonWasPressed)
+            }
+        }
+
         state<State.Activating> {
 
-            on<Event.TriggerActivated> {
-                transitionTo(State.Activated, SideEffect.LogTriggerActivate)
+            on<Event.AlarmButtonActivated> {
+                transitionTo(State.Activated, SideEffect.AlarmButtonWasActivated)
             }
 
-            on<Event.TriggerReleased> {
-                transitionTo(State.Idle, SideEffect.LogTriggerReleased)
+            on<Event.AlarmButtonReleased> {
+                transitionTo(State.Idle, SideEffect.AlarmButtonWasReleased)
             }
         }
 
-        /************** ACTIVATED **************/
         state<State.Activated> {
-            on<Event.TriggerReleased> {
-                transitionTo(State.Defusing, SideEffect.LogTriggerReleased)
+            on<Event.AlarmButtonReleased> {
+                transitionTo(State.Defusing, SideEffect.AlarmButtonWasReleased)
             }
         }
 
-        /************** DEFUSING **************/
         state<State.Defusing> {
             on<Event.AlarmDefused> {
-                transitionTo(State.Idle, SideEffect.LogAlarmDefused)
+                transitionTo(State.Idle, SideEffect.AlarmHasBeenDefused)
             }
             on<Event.AlarmTriggered> {
-                transitionTo(State.Alarming, SideEffect.LogAlarmTriggered)
+                transitionTo(State.Alarming, SideEffect.AlarmHasBeenTriggered)
             }
         }
 
-        /************** ALARMING **************/
         state<State.Alarming> {
             on<Event.AlarmDefused> {
-                transitionTo(State.Idle, SideEffect.LogAlarmDefused)
+                transitionTo(State.Idle, SideEffect.AlarmHasBeenDefused)
             }
         }
 
         state<State.AlarmingDefusable> {
-            on<Event.AlarmDefusable> {
-                transitionTo(State.AlarmingDefusable, SideEffect.LogAlarmDefusable)
+            on<Event.AlarmSetDefusable> {
+                transitionTo(State.AlarmingDefusable, SideEffect.AlarmHasBeenMadeDefusable)
             }
         }
 
         onTransition {
+
             val validTransition = it as? StateMachine.Transition.Valid ?: return@onTransition
 
+
             when (validTransition.sideEffect) {
-                SideEffect.LogTriggerPressed -> {
-                    println("Trigger button has been suppressed")
 
-                    //Animate progressbar pre trigger activation
-                    //Animate background color to red
-                    //Animate color change of trigger button
+                SideEffect.AlarmButtonWasPressed -> {
+                    println("button pressed")
+                    mainView.renderActivating()
 
-                    timer.schedule(5000) {
-                        transition(Event.TriggerActivated)
-                    }
+                    handler.postDelayed(runDelayedTransitionToActivatedState, 6000)
+
                 }
 
-                SideEffect.LogTriggerActivate -> {
-                    println(" Trigger is Active")
+                SideEffect.AlarmButtonWasActivated -> {
+                    println("alarm button activated")
 
                     //ScaleTriggerToScreenSize
                     //Initiallize button pulsating animation
@@ -115,45 +129,44 @@ class Alarm() {
                     //Update GPS location to firebase every X minutes
                 }
 
-                SideEffect.LogTriggerReleased -> {
+                SideEffect.AlarmButtonWasReleased -> {
                     when (it.fromState) {
                         State.Activating -> {
-                            println("Trigger has been released - Before being activated")
+                            println("alarm button released safely in state :${validTransition.fromState}")
 
-                            timer.cancel()
+                            handler.removeCallbacks(runDelayedTransitionToActivatedState)
+                            mainView.renderIdle()
+
+
+
                             //Deanimate background to default color
                             //Deanimate progressbar around trigger button
                             //Deanimate button to default color
                         }
                         State.Activated -> {
-                            println("Trigger has been released - While being active")
-
+                            println("alarm button triggered entering state:${validTransition.toState}")
                             //Show Defuse Fragment
                             //Show CountDownTimer
                             //Deactivate physical buttons to deter closing app to avoid alarm
                             //Start firebase countdown to trigger alarm. so in case phone is broken/switched off.. alarm still goes off.
 
-                            timer.schedule(10000) {
-                                transition(Event.AlarmTriggered)
-                            }
+                            handler.postDelayed(runDelayedTransitionToAlarmTriggered, 10000)
                         }
                     }
                 }
 
-                SideEffect.LogAlarmDefused -> {
-                    println("Defused")
-                    println("Returning to idle state")
+                SideEffect.AlarmHasBeenDefused -> {
 
-                    timer.cancel()
+                    println("alarm defused safely in state")
+                    handler.removeCallbacks(runDelayedTransitionToAlarmTriggered)
+
                     //Return to main activity
                     //Animate background back to default color
 
                 }
 
-                SideEffect.LogAlarmTriggered -> {
-
-                    println("Alarm has been triggered")
-                    println("Begin notifying ICE contacts")
+                SideEffect.AlarmHasBeenTriggered -> {
+                    println("alarm has been triggered - contact ICE contacts current state :${validTransition.toState}")
 
                     //Set off Alarm to contacts
                     //Flash screen at highest brightness between RED and White to attract attention
@@ -161,12 +174,11 @@ class Alarm() {
                     //Deactivate physical buttons to deter closing app / Switching phone off
                     //Update current location to firebase and Alert anyone in near proximity with app. approx 1km radius from alarm trigger location
 
-                    timer.schedule(10000) {
-                        transition(Event.AlarmDefusable)
-                    }
+                    handler.postDelayed(runDelayedTransitionToAlarmSetDefusable, 10000)
                 }
-                SideEffect.LogAlarmDefusable -> {
-                    println("Alarm Is now Defusable")
+                SideEffect.AlarmHasBeenMadeDefusable -> {
+
+                    println("alarm is still triggered but defusable state is: ${validTransition.toState}")
 
                     //Show Button to display defuse fragment
 

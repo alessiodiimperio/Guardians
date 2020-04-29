@@ -6,7 +6,7 @@
     <item android:id="@android:id/background">
 
         <shape android:shape="ring" android:useLevel="false">
-            <solid android:color="@android:color/background_dark"/>
+            <solid android:color="@android:color/darker_gray"/>
         </shape>
 
     </item>
@@ -27,8 +27,6 @@
                     android:type="sweep"
                     android:useLevel="false"/>
             </shape>
-
-
         </rotate>
     </item>
 </layer-list>
