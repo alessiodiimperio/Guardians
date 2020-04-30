@@ -1,19 +1,24 @@
 package se.diimperio.guardians
 
+import android.app.ActionBar
 import android.content.Context
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.view.MotionEvent
 import android.view.View
 import android.view.View.*
+import android.view.ViewGroup
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.solver.GoalRow
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.updateLayoutParams
 
 const val COUNTDOWN_ACTIVATION_LENGTH:Long = 6000
-const val COUNTDOWN_PIN_LENGTH:Long = 10000
+const val COUNTDOWN_PIN_LENGTH:Long = 11000
 const val TICK_LENGTH:Long = 1000
 
 class MainActivity() : AppCompatActivity() {
@@ -23,6 +28,7 @@ class MainActivity() : AppCompatActivity() {
     lateinit var countDownTextView:TextView
     lateinit var activationProgressCircle:ProgressBar
     lateinit var countDownTimer: CountDownTimer
+    lateinit var menuBttn:Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +37,7 @@ class MainActivity() : AppCompatActivity() {
         activationProgressCircle = findViewById<ProgressBar>(R.id.activatingProgressBar)
         triggerBttn = findViewById(R.id.alarm_trigger)
         defuseBttn = findViewById<Button>(R.id.defuse_button)
+        menuBttn = findViewById(R.id.main_menu_button)
 
         val alarm = Alarm(this)
 
@@ -79,6 +86,7 @@ class MainActivity() : AppCompatActivity() {
         activationProgressCircle.visibility = VISIBLE
         defuseBttn.visibility = GONE
         triggerBttn.visibility = VISIBLE
+        menuBttn.visibility = GONE
 
         showCountDown(COUNTDOWN_ACTIVATION_LENGTH)
 
@@ -91,6 +99,8 @@ class MainActivity() : AppCompatActivity() {
         activationProgressCircle.visibility = GONE
         defuseBttn.visibility = GONE
         triggerBttn.visibility = VISIBLE
+        menuBttn.visibility = GONE
+        scaleTriggerButton()
 
         //ScaleTriggerToScreenSize
         //Initiallize button pulsating animation
@@ -101,8 +111,10 @@ class MainActivity() : AppCompatActivity() {
         countDownTextView.visibility = VISIBLE
         defuseBttn.visibility = GONE
         activationProgressCircle.visibility = GONE
+        menuBttn.visibility = GONE
 
         showCountDown(COUNTDOWN_PIN_LENGTH)
+        shrinkTriggerButton()
 
         //Show fragment with touchpad to enter PIN to defuse
         //Show CountDownTimer 10 seconds
@@ -110,9 +122,10 @@ class MainActivity() : AppCompatActivity() {
     }
     fun renderAlarming(){
         triggerBttn.visibility = GONE
-        countDownTextView.visibility = VISIBLE
+        countDownTextView.visibility = GONE
         defuseBttn.visibility = GONE
         activationProgressCircle.visibility = GONE
+        menuBttn.visibility = GONE
 
         //Flash screen at highest brightness between RED and White to attract attention
         //Play Siren att highest possible volume.
@@ -123,20 +136,31 @@ class MainActivity() : AppCompatActivity() {
         countDownTextView.visibility = GONE
         defuseBttn.visibility = VISIBLE
         activationProgressCircle.visibility = GONE
-        //Show defuse button to allow defusing of alarm with pin
-    }
-    fun showCountDown(length:Long){
+        menuBttn.visibility = GONE
 
-        countDownTimer = object : CountDownTimer(length, TICK_LENGTH) {
+        //on defuse bttn press show defuse fragment
+    }
+    fun showCountDown(countLength:Long){
+        countDownTimer = object : CountDownTimer(countLength, TICK_LENGTH) {
             override fun onTick(millisUntilFinished: Long) {
                 countDownTextView.text = (millisUntilFinished / 1000).toString()
-                activationProgressCircle.progress = (1000 / millisUntilFinished * 100).toInt()
+                activationProgressCircle.progress = (millisUntilFinished / countLength * 100).toInt()
             }
-
             override fun onFinish() {
                 countDownTimer.cancel()
             }
-
         }.start()
+    }
+    fun scaleTriggerButton(){
+        val params: ViewGroup.LayoutParams = triggerBttn.layoutParams
+        params.width = ViewGroup.LayoutParams.MATCH_PARENT
+        params.height = ViewGroup.LayoutParams.MATCH_PARENT
+        triggerBttn.layoutParams = params
+    }
+    fun shrinkTriggerButton(){
+        val params: ViewGroup.LayoutParams = triggerBttn.layoutParams
+        params.width = 400
+        params.height = 400
+        triggerBttn.layoutParams = params
     }
 }
