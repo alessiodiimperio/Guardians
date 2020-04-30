@@ -134,11 +134,13 @@ class Alarm(mainView : MainActivity) {
                             Log.d("STATE_MACHINE", "AlarmButton trigger released before activating")
 
                             mainView.renderIdle()
+
                             handler.removeCallbacks(transitionToActivatedState)
                         }
 
                         State.Activated -> {
                             Log.d("STATE_MACHINE", "Alarm has been activated. 10 seconds to defuse")
+
                             mainView.renderDefusing()
 
                             //Start firebase countdown to trigger alarm. so in case phone is broken/switched off.. alarm still goes off.

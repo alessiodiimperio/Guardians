@@ -11,20 +11,23 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import kotlin.properties.Delegates
+import com.beautycoder.pflockscreen.PFFLockScreenConfiguration
+import com.beautycoder.pflockscreen.fragments.PFLockScreenFragment
+import com.beautycoder.pflockscreen.fragments.PFLockScreenFragment.OnPFLockScreenCodeCreateListener
 
-const val COUNTDOWN_ACTIVATION_LENGTH:Long = 6000
-const val COUNTDOWN_PIN_LENGTH:Long = 11000
-const val TICK_LENGTH:Long = 1000
+
+const val COUNTDOWN_ACTIVATION_LENGTH: Long = 6000
+const val COUNTDOWN_PIN_LENGTH: Long = 11000
+const val TICK_LENGTH: Long = 1000
 
 class MainActivity() : AppCompatActivity() {
 
     lateinit var triggerBttn: Button
-    lateinit var defuseBttn:Button
-    lateinit var countDownTextView:TextView
-    lateinit var activationProgressCircle:ProgressBar
+    lateinit var defuseBttn: Button
+    lateinit var countDownTextView: TextView
+    lateinit var activationProgressCircle: ProgressBar
     lateinit var countDownTimer: CountDownTimer
-    lateinit var menuBttn:Button
+    lateinit var menuBttn: Button
     var triggerBttnInitialSize = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,9 +63,26 @@ class MainActivity() : AppCompatActivity() {
         defuseBttn.setOnClickListener {
             alarm.stateMachine.transition(Alarm.Event.AlarmDefused)
         }
+
+        menuBttn.setOnClickListener {
+            val fragment = PFLockScreenFragment()
+            val builder =
+                PFFLockScreenConfiguration.Builder(this)
+                    .setMode(PFFLockScreenConfiguration.MODE_CREATE)
+            fragment.setConfiguration(builder.build())
+            fragment.setCodeCreateListener(object : OnPFLockScreenCodeCreateListener {
+                override fun onNewCodeValidationFailed() {
+                    TODO("Not yet implemented")
+                }
+
+                override fun onCodeCreated(encodedCode: String) {
+                    println("code is $encodedCode")
+                }
+            })
+        }
     }
 
-    fun renderIdle(){
+    fun renderIdle() {
 
         // - UI components
         countDownTextView.visibility = GONE
@@ -78,7 +98,8 @@ class MainActivity() : AppCompatActivity() {
         //Change button sizd back
         //Change backgroundcolor back
     }
-    fun renderActivating(){
+
+    fun renderActivating() {
 
         // - UI Components
         countDownTextView.visibility = VISIBLE
@@ -93,7 +114,8 @@ class MainActivity() : AppCompatActivity() {
         //Animate background color to red
         //Animate color change of trigger button
     }
-    fun renderActivated(){
+
+    fun renderActivated() {
         countDownTextView.visibility = GONE
         activationProgressCircle.visibility = GONE
         defuseBttn.visibility = GONE
@@ -105,7 +127,7 @@ class MainActivity() : AppCompatActivity() {
         //Initiallize button pulsating animation
     }
 
-    fun renderDefusing(){
+    fun renderDefusing() {
         triggerBttn.visibility = GONE
         countDownTextView.visibility = VISIBLE
         defuseBttn.visibility = GONE
@@ -119,7 +141,8 @@ class MainActivity() : AppCompatActivity() {
         //Show CountDownTimer 10 seconds
         //Deactivate physical buttons to deter closing app to avoid alarm or switching off phone
     }
-    fun renderAlarming(){
+
+    fun renderAlarming() {
         triggerBttn.visibility = GONE
         countDownTextView.visibility = GONE
         defuseBttn.visibility = GONE
@@ -130,7 +153,8 @@ class MainActivity() : AppCompatActivity() {
         //Play Siren att highest possible volume.
         //Deactivate physical buttons to deter closing app / Switching phone off
     }
-    fun renderAlarmingDefusable(){
+
+    fun renderAlarmingDefusable() {
         triggerBttn.visibility = GONE
         countDownTextView.visibility = GONE
         defuseBttn.visibility = VISIBLE
@@ -139,18 +163,22 @@ class MainActivity() : AppCompatActivity() {
 
         //on defuse bttn press show defuse fragment
     }
-    fun showCountDown(countLength:Long){
+
+    fun showCountDown(countLength: Long) {
         countDownTimer = object : CountDownTimer(countLength, TICK_LENGTH) {
             override fun onTick(millisUntilFinished: Long) {
                 countDownTextView.text = (millisUntilFinished / 1000).toString()
-                activationProgressCircle.progress = (millisUntilFinished / countLength * 100).toInt()
+                activationProgressCircle.progress =
+                    (millisUntilFinished / countLength * 100).toInt()
             }
+
             override fun onFinish() {
                 countDownTimer.cancel()
             }
         }.start()
     }
-    fun upSizeTriggerBttn(){
+
+    fun upSizeTriggerBttn() {
         val params: ViewGroup.LayoutParams = triggerBttn.layoutParams
         params.width = ViewGroup.LayoutParams.MATCH_PARENT
         params.height = ViewGroup.LayoutParams.MATCH_PARENT
@@ -158,7 +186,8 @@ class MainActivity() : AppCompatActivity() {
 
 
     }
-    fun downSizeTriggerBttn(){
+
+    fun downSizeTriggerBttn() {
         val params: ViewGroup.LayoutParams = triggerBttn.layoutParams
         params.width = triggerBttnInitialSize
         params.height = triggerBttnInitialSize
