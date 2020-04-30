@@ -1,21 +1,17 @@
 package se.diimperio.guardians
 
-import android.app.ActionBar
-import android.content.Context
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.view.MotionEvent
 import android.view.View
-import android.view.View.*
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.solver.GoalRow
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.view.updateLayoutParams
+import kotlin.properties.Delegates
 
 const val COUNTDOWN_ACTIVATION_LENGTH:Long = 6000
 const val COUNTDOWN_PIN_LENGTH:Long = 11000
@@ -29,6 +25,7 @@ class MainActivity() : AppCompatActivity() {
     lateinit var activationProgressCircle:ProgressBar
     lateinit var countDownTimer: CountDownTimer
     lateinit var menuBttn:Button
+    var triggerBttnInitialSize = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,6 +35,8 @@ class MainActivity() : AppCompatActivity() {
         triggerBttn = findViewById(R.id.alarm_trigger)
         defuseBttn = findViewById<Button>(R.id.defuse_button)
         menuBttn = findViewById(R.id.main_menu_button)
+
+        triggerBttnInitialSize = triggerBttn.layoutParams.width
 
         val alarm = Alarm(this)
 
@@ -100,7 +99,7 @@ class MainActivity() : AppCompatActivity() {
         defuseBttn.visibility = GONE
         triggerBttn.visibility = VISIBLE
         menuBttn.visibility = GONE
-        scaleTriggerButton()
+        upSizeTriggerBttn()
 
         //ScaleTriggerToScreenSize
         //Initiallize button pulsating animation
@@ -114,7 +113,7 @@ class MainActivity() : AppCompatActivity() {
         menuBttn.visibility = GONE
 
         showCountDown(COUNTDOWN_PIN_LENGTH)
-        shrinkTriggerButton()
+        downSizeTriggerBttn()
 
         //Show fragment with touchpad to enter PIN to defuse
         //Show CountDownTimer 10 seconds
@@ -151,16 +150,18 @@ class MainActivity() : AppCompatActivity() {
             }
         }.start()
     }
-    fun scaleTriggerButton(){
+    fun upSizeTriggerBttn(){
         val params: ViewGroup.LayoutParams = triggerBttn.layoutParams
         params.width = ViewGroup.LayoutParams.MATCH_PARENT
         params.height = ViewGroup.LayoutParams.MATCH_PARENT
         triggerBttn.layoutParams = params
+
+
     }
-    fun shrinkTriggerButton(){
+    fun downSizeTriggerBttn(){
         val params: ViewGroup.LayoutParams = triggerBttn.layoutParams
-        params.width = 400
-        params.height = 400
+        params.width = triggerBttnInitialSize
+        params.height = triggerBttnInitialSize
         triggerBttn.layoutParams = params
     }
 }
