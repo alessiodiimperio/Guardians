@@ -1,12 +1,13 @@
 package se.diimperio.guardians
 
+import Alarm.AlarmFragment
 import android.os.Handler
 import android.util.Log
 import com.tinder.StateMachine
 
 const val STATE_TIMER = "STATE_TIMER"
 
-class Alarm(mainView : MainActivity) {
+class Alarm(view : AlarmFragment) {
 
     sealed class State {
         object Idle : State()
@@ -114,7 +115,7 @@ class Alarm(mainView : MainActivity) {
                     Log.d("STATE_MACHINE", "AlarmButton Pressed")
 
                     handler.postDelayed(transitionToActivatedState, 5000)
-                    mainView.renderActivating()
+                    view.renderActivating()
 
                 }
 
@@ -122,7 +123,7 @@ class Alarm(mainView : MainActivity) {
 
                     Log.d("STATE_MACHINE", "AlarmButton trigger is now active")
 
-                    mainView.renderActivated()
+                    view.renderActivated()
 
                     //Set up connection to firebase
                     //Update GPS location to firebase every X minutes
@@ -133,7 +134,7 @@ class Alarm(mainView : MainActivity) {
                         State.Activating -> {
                             Log.d("STATE_MACHINE", "AlarmButton trigger released before activating")
 
-                            mainView.renderIdle()
+                            view.renderIdle()
 
                             handler.removeCallbacks(transitionToActivatedState)
                         }
@@ -141,7 +142,7 @@ class Alarm(mainView : MainActivity) {
                         State.Activated -> {
                             Log.d("STATE_MACHINE", "Alarm has been activated. 10 seconds to defuse")
 
-                            mainView.renderDefusing()
+                            view.renderDefusing()
 
                             //Start firebase countdown to trigger alarm. so in case phone is broken/switched off.. alarm still goes off.
                             handler.postDelayed(transitionToAlarmTriggered, 10000)
@@ -154,7 +155,7 @@ class Alarm(mainView : MainActivity) {
                     Log.d("STATE_MACHINE", "Alarm has been defused")
                     handler.removeCallbacks(transitionToAlarmTriggered)
 
-                    mainView.renderIdle()
+                    view.renderIdle()
                     //Notify firebase Alarm Has been defused
                 }
 
@@ -164,7 +165,7 @@ class Alarm(mainView : MainActivity) {
                     //Set off Alarm to contacts
                     //Update current location to firebase and Alert anyone in near proximity with app. approx 1km radius from alarm trigger location
 
-                    mainView.renderAlarming()
+                    view.renderAlarming()
 
                     handler.postDelayed(transitionAlarmToDefusableState, 10000)
 
@@ -173,7 +174,7 @@ class Alarm(mainView : MainActivity) {
 
                     Log.d("STATE_MACHINE", "Alarm has changed to a defusable state")
 
-                    mainView.renderAlarmingDefusable()
+                    view.renderAlarmingDefusable()
 
                 }
             }
