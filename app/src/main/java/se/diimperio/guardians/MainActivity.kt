@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.Toast
+import android.widget.Toolbar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -18,9 +19,13 @@ class MainActivity() : AppCompatActivity() {
 
     lateinit var bottomNav:BottomNavigationView
 
+    lateinit var toolbar:androidx.appcompat.widget.Toolbar
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        toolbar = findViewById(R.id.activity_toolbar)
 
         bottomNav = findViewById(R.id.bottom_navigation)
 
@@ -54,6 +59,7 @@ class MainActivity() : AppCompatActivity() {
     fun hideBottomNav() {
         bottomNav.visibility = GONE
     }
+
 /*
 
 

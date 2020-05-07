@@ -12,7 +12,9 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
+import kotlinx.android.synthetic.main.activity_main.*
 import se.diimperio.guardians.Alarm
 import se.diimperio.guardians.MainActivity
 import se.diimperio.guardians.R
@@ -50,6 +52,8 @@ class AlarmFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val alarm = Alarm(this)
+
+        setupToolbar()
 
         triggerBttn = view.findViewById(R.id.alarm_trigger)
         defuseBttn = view.findViewById<Button>(R.id.defuse_button)
@@ -197,5 +201,10 @@ class AlarmFragment : Fragment() {
         params.width = triggerBttnInitialSize
         params.height = triggerBttnInitialSize
         triggerBttn.layoutParams = params
+    }
+    fun setupToolbar() {
+
+        (activity as MainActivity).toolbar.visibility = GONE
+
     }
 }

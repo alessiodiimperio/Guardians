@@ -1,26 +1,27 @@
 package Settings
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.VISIBLE
 import android.view.ViewGroup
-
+import android.widget.Toolbar
+import androidx.fragment.app.Fragment
+import androidx.preference.PreferenceFragmentCompat
+import se.diimperio.guardians.MainActivity
 import se.diimperio.guardians.R
 
-class SettingsFragment : Fragment() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-        }
+class SettingsFragment : PreferenceFragmentCompat() {
+
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        setPreferencesFromResource(R.xml.preferences, rootKey)
+        setupToolbar()
+    }
+    fun setupToolbar(){
+        (activity as MainActivity).toolbar.visibility = VISIBLE
+        (activity as MainActivity).toolbar.setTitle("Settings")
+        (activity as MainActivity).toolbar.setNavigationIcon(R.drawable.ic_settings)
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_settings, container, false)
-    }
 }

@@ -51,4 +51,6 @@ dependencies {
     //PFLockscreen Pin Lock
     implementation 'com.github.thealeksandr:PFLockScreen-Android:1.0.0-beta7'
 
+    //Preference compat
+    implementation "androidx.preference:preference:1.0.0"
 }
