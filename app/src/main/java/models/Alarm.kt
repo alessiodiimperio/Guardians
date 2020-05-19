@@ -1,4 +1,4 @@
-package se.diimperio.guardians
+package models
 
 import Alarm.AlarmFragment
 import android.os.Handler
@@ -37,8 +37,6 @@ class Alarm(view : AlarmFragment) {
         object AlarmHasBeenMadeDefusable : SideEffect()
     }
 
-
-
     var stateMachine = StateMachine.create<State, Event, SideEffect> {
         initialState(State.Idle)
 
@@ -62,44 +60,68 @@ class Alarm(view : AlarmFragment) {
 
         state<State.Idle> {
             on<Event.AlarmButtonPressed> {
-                transitionTo(State.Activating, SideEffect.AlarmButtonWasPressed)
+                transitionTo(
+                    State.Activating,
+                    SideEffect.AlarmButtonWasPressed
+                )
             }
         }
 
         state<State.Activating> {
             on<Event.AlarmButtonActivated> {
-                transitionTo(State.Activated, SideEffect.AlarmButtonWasActivated)
+                transitionTo(
+                    State.Activated,
+                    SideEffect.AlarmButtonWasActivated
+                )
             }
 
             on<Event.AlarmButtonReleased> {
-                transitionTo(State.Idle, SideEffect.AlarmButtonWasReleased)
+                transitionTo(
+                    State.Idle,
+                    SideEffect.AlarmButtonWasReleased
+                )
             }
         }
 
         state<State.Activated> {
             on<Event.AlarmButtonReleased> {
-                transitionTo(State.Defusing, SideEffect.AlarmButtonWasReleased)
+                transitionTo(
+                    State.Defusing,
+                    SideEffect.AlarmButtonWasReleased
+                )
             }
         }
 
         state<State.Defusing> {
             on<Event.AlarmDefused> {
-                transitionTo(State.Idle, SideEffect.AlarmHasBeenDefused)
+                transitionTo(
+                    State.Idle,
+                    SideEffect.AlarmHasBeenDefused
+                )
             }
             on<Event.AlarmTriggered> {
-                transitionTo(State.Alarming, SideEffect.AlarmHasBeenTriggered)
+                transitionTo(
+                    State.Alarming,
+                    SideEffect.AlarmHasBeenTriggered
+                )
             }
         }
 
         state<State.Alarming> {
             on<Event.AlarmSetDefusable> {
-                transitionTo(State.AlarmingDefusable, SideEffect.AlarmHasBeenMadeDefusable)
+                transitionTo(
+                    State.AlarmingDefusable,
+                    SideEffect.AlarmHasBeenMadeDefusable
+                )
             }
         }
 
         state<State.AlarmingDefusable> {
             on<Event.AlarmDefused> {
-                transitionTo(State.Idle, SideEffect.AlarmHasBeenDefused)
+                transitionTo(
+                    State.Idle,
+                    SideEffect.AlarmHasBeenDefused
+                )
             }
         }
 
@@ -184,5 +206,4 @@ class Alarm(view : AlarmFragment) {
     fun transition(event: Event) {
         stateMachine.transition(event)
     }
-
 }

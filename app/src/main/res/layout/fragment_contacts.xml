@@ -19,7 +19,7 @@
         tools:listitem="@layout/ice_card" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/floating_action_button"
+        android:id="@+id/add_guardian_fab"
         android:backgroundTint="?attr/colorPrimary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

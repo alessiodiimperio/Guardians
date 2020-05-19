@@ -1,17 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <SwitchPreferenceCompat
         app:key="testmode"
         app:title="Testmode - Non Live Alarm"
         app:summary="Activate testmode to learn how the alarm works. In testmode no loud noises are triggered and the alarm state can be defused directly"
-        app:icon="@drawable/ic_settings_alarm"/>
+        app:icon="@drawable/ic_settings_alarm"
+        android:defaultValue="false"/>
 
     <Preference
-        app:key="newpin"
+        app:key="setpin"
         app:title="Set PIN"
         app:summary="Set the PIN for defusing the alarm."
         app:icon="@drawable/ic_settings_pin"/>
+    <Preference
+        app:key="signout"
+        app:title="Sign Out"
+        android:summary="Sign out the current user"
+        app:icon="@drawable/ic_exit"/>
 
 </PreferenceScreen>

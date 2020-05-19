@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "497360580718-c7et6fqjgg76e53u1sopjkirmip8f6pt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "se.diimperio.guardians",
+            "certificate_hash": "fe7b98c768d67b28fef0b400a9041303b4626b0b"
+          }
+        },
+        {
           "client_id": "497360580718-6v89kebdvtrfb2hmlrdv8ab7itjjpkkm.apps.googleusercontent.com",
           "client_type": 3
         }

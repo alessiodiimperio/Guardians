@@ -1,5 +1,6 @@
 package Contacts
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -8,11 +9,15 @@ import android.view.View.VISIBLE
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import se.diimperio.guardians.DataStore
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import se.diimperio.guardians.MainActivity
 import se.diimperio.guardians.R
 
 class ContactsFragment : Fragment() {
+
+    lateinit var addGuardian:FloatingActionButton
+    lateinit var recyclerView:RecyclerView
+    lateinit var adapter:ICERecyclerAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,18 +33,32 @@ class ContactsFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_contacts, container, false)
     }
 
-    override fun onStart() {
-        super.onStart()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        val recyclerView: RecyclerView? = view?.findViewById(R.id.ice_contacts_recyclerview)
-        val adapter = ICERecyclerAdapter(context!!, DataStore.guardians)
+        recyclerView = view.findViewById(R.id.ice_contacts_recyclerview)
+        adapter = ICERecyclerAdapter(context!!)
+
+        addGuardian = view.findViewById(R.id.add_guardian_fab)
 
         //Toolbar setup
         setupToolbar()
 
         //RecyclerView Setup
-        recyclerView?.layoutManager = LinearLayoutManager(context)
-        recyclerView?.adapter = adapter
+        recyclerView.layoutManager = LinearLayoutManager(context)
+        recyclerView.adapter = adapter
+
+        //Add guardian
+        addGuardian.setOnClickListener {
+            val intent = Intent(view.context, AddGuardian::class.java)
+            startActivity(intent)
+        }
+
+    }
+    override fun onResume() {
+        super.onResume()
+        recyclerView.adapter?.notifyDataSetChanged()
+
     }
     fun setupToolbar(){
         (activity as MainActivity).toolbar.visibility = VISIBLE
