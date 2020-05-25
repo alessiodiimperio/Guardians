@@ -9,16 +9,13 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.ContactsContract
 import android.provider.MediaStore
-import android.util.Log
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.*
 import androidx.annotation.RequiresApi
-import com.google.firebase.storage.FirebaseStorage
-import models.DataStore
+import models.UserManager
 import models.Guardian
 import se.diimperio.guardians.R
-import java.util.*
 
 const val ADD_GUARDIAN: String = "ADD_GUARDIAN"
 
@@ -34,7 +31,7 @@ class AddGuardian : AppCompatActivity() {
     lateinit var importGuardian: Button
     lateinit var saveGuardian: Button
 
-    var avatarURI:String? = null
+    var avatarURI: String? = null
 
     val REQUEST_CONTACT_INFO = 1
 
@@ -130,32 +127,16 @@ class AddGuardian : AppCompatActivity() {
 
             //Create new guardian w/o avatar if avatar is null
             if (avatarURI != null) {
-
-                val filename = UUID.randomUUID().toString()
-                val ref = FirebaseStorage.getInstance().getReference("/images/$filename")
-
-                ref.putFile(Uri.parse(avatarURI))
-                    .addOnSuccessListener {
-
-                        Log.d(ADD_GUARDIAN, "image uploaded")
-                        ref.downloadUrl.addOnSuccessListener { link ->
-                            Log.d(ADD_GUARDIAN, "File location: $link")
-                            val newGuardian = Guardian(
-                                null,
-                                link.toString(),
-                                guardianName.text.toString(),
-                                guardianNumber.text.toString(),
-                                guardianRelation.selectedItem.toString()
-                            )
-                            DataStore.addGuardian(newGuardian)
-                            progressBar.visibility = GONE
-                            finish()
-                        }
-                    }
-                    .addOnFailureListener {
-                        Log.d("Main", "Failed to save photo")
-                    }
-
+                val newGuardian = Guardian(
+                    null,
+                    avatarURI.toString(),
+                    guardianName.text.toString(),
+                    guardianNumber.text.toString(),
+                    guardianRelation.selectedItem.toString()
+                )
+                UserManager.addGuardian(newGuardian)
+                progressBar.visibility = GONE
+                finish()
             } else {
                 val newGuardian = Guardian(
                     null,
@@ -164,10 +145,11 @@ class AddGuardian : AppCompatActivity() {
                     guardianNumber.text.toString(),
                     guardianRelation.selectedItem.toString()
                 )
-                DataStore.addGuardian(newGuardian)
+                UserManager.addGuardian(newGuardian)
                 progressBar.visibility = GONE
-                    finish()
+                finish()
             }
         }
+        UserManager.syncChangesToFirebase()
     }
 }

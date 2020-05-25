@@ -39,7 +39,7 @@ class LoginActivity : AppCompatActivity() {
         loginBttn = findViewById(R.id.login_button)
         registerBttn = findViewById(R.id.register_button)
 
-        if (auth.currentUser != null){
+        if (auth.uid != null){
             goToMainActivity()
         }
         loginBttn.setOnClickListener {

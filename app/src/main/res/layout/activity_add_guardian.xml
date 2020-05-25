@@ -70,7 +70,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
-        android:tint="@color/colorAccent"
+        android:tint="@color/colorPurpleAccent"
         app:layout_constraintBottom_toBottomOf="@+id/add_guardian_name_edittext"
         app:layout_constraintEnd_toStartOf="@+id/add_guardian_name_edittext"
         app:layout_constraintTop_toTopOf="@+id/add_guardian_name_edittext"
@@ -85,7 +85,7 @@
         app:layout_constraintBottom_toBottomOf="@+id/add_guardian_relationship_spinner"
         app:layout_constraintEnd_toStartOf="@+id/add_guardian_relationship_spinner"
         app:srcCompat="@drawable/ic_guardian"
-        android:tint="@color/colorAccent"/>
+        android:tint="@color/colorPurpleAccent"/>
 
     <Button
         android:id="@+id/add_guardian_import_button"

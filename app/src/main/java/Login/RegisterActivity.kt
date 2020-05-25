@@ -12,7 +12,7 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import models.DataStore
+import models.UserManager
 import se.diimperio.guardians.MainActivity
 import se.diimperio.guardians.R
 
@@ -71,6 +71,7 @@ class RegisterActivity : AppCompatActivity() {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
+
                     Toast.makeText(this,
                         "User created",
                         Toast.LENGTH_SHORT).show()
@@ -95,22 +96,26 @@ class RegisterActivity : AppCompatActivity() {
         number = numberField.text.toString()
 
         val userRef =  db.collection("/users/")
-        val emailRef = db.collection("/emailToUid/")
+        //val emailRef = db.collection("/emailToUid/")
 
-        DataStore.currentUser.uid = userId
-        DataStore.currentUser.name = name
-        DataStore.currentUser.email = email
-        DataStore.currentUser.mobilNR = number
-        DataStore.currentUser.location = mutableListOf()
-        DataStore.currentUser.guardians = mutableListOf()
+        UserManager.currentUser.uid = userId
+        UserManager.currentUser.name = name
+        UserManager.currentUser.email = email
+        UserManager.currentUser.mobilNR = number
+        UserManager.currentUser.location = null
+        UserManager.currentUser.guardians = mutableListOf()
 
-        userRef.document("$userId").set(DataStore.currentUser).addOnSuccessListener {
+        userRef.document("$userId").set(UserManager.currentUser).addOnSuccessListener {
             Log.d(FIREBASE, "CurrentUser object added to firestore")
             logInNewUser()
         }.addOnFailureListener {error->
             Log.d(FIREBASE, "Exception: $error ")
             progressBar.visibility = GONE
         }
+
+        /*
+        Try to get email to uid to connet users that have the app installed together for device to device push notifications
+
         if(email != null || email.isNotEmpty()){
             emailRef.document("$email").set("$userId")
                 .addOnSuccessListener {
@@ -120,6 +125,8 @@ class RegisterActivity : AppCompatActivity() {
                     Log.d(FIREBASE, "email to uid failed")
                 }
         }
+
+         */
     }
     private fun logInNewUser(){
         val intent = Intent(this, MainActivity::class.java)

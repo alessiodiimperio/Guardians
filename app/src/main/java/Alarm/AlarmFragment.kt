@@ -1,13 +1,11 @@
 package Alarm
 
 import Settings.PreferencesSettings
-import android.content.Intent
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.provider.ContactsContract
 import android.telephony.SmsManager
 import android.util.Log
 import android.view.LayoutInflater
@@ -16,45 +14,43 @@ import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ProgressBar
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.annotation.RequiresApi
-import androidx.core.content.PermissionChecker.checkSelfPermission
 import androidx.fragment.app.Fragment
 import com.beautycoder.pflockscreen.PFFLockScreenConfiguration
 import com.beautycoder.pflockscreen.fragments.PFLockScreenFragment
-import com.google.firebase.firestore.remote.Datastore
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.material.button.MaterialButton
 import models.Alarm
-import models.DataStore
+import models.AlarmManager
+import models.UserManager
 import se.diimperio.guardians.MainActivity
 import se.diimperio.guardians.R
-import java.util.*
 
-const val ALARM_FRAGMENT:String = "ALARM_FRAGMENT"
-const val REQUEST_PERMISSION_SMS_FINE_LOCATION : Int = 2
-const val ALARMING_FRAGMENT:String = "ALARMING_FRAGMENT"
-const val CREATE_PIN_FRAGMENT:String = "CREATE_PIN_FRAGMENT"
-const val INSERT_PIN_FRAGMENT:String = "INSERT_PIN_FRAGMENT"
+const val ALARM_FRAGMENT: String = "ALARM_FRAGMENT"
+const val REQUEST_PERMISSION_SMS_FINE_LOCATION: Int = 2
+const val ALARMING_FRAGMENT: String = "ALARMING_FRAGMENT"
+const val CREATE_PIN_FRAGMENT: String = "CREATE_PIN_FRAGMENT"
+const val INSERT_PIN_FRAGMENT: String = "INSERT_PIN_FRAGMENT"
 const val COUNTDOWN_ACTIVATION_LENGTH: Long = 6000
 const val COUNTDOWN_PIN_LENGTH: Long = 11000
 const val TICK_LENGTH: Long = 1000
 
 class AlarmFragment : Fragment() {
 
-    lateinit var alarm:Alarm
-    lateinit var triggerBttn:Button
-    lateinit var defuseBttn:Button
-    lateinit var countDownTextView:TextView
-    lateinit var activationProgressCircle:ProgressBar
+    lateinit var mainActivity: MainActivity
+    lateinit var alarm: Alarm
+    lateinit var triggerBttn: MaterialButton
+    lateinit var defuseBttn: Button
+    lateinit var countDownTextView: TextView
+    lateinit var activationProgressCircle: ProgressBar
     lateinit var countDownTimer: CountDownTimer
     var triggerBttnInitialSize = 0
+    var triggerButtonRadius = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-
         }
     }
 
@@ -66,34 +62,48 @@ class AlarmFragment : Fragment() {
         return view
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        //Pass fragment view to Alarm StateMachine to control event flow
         alarm = Alarm(this)
 
         hideToolbar()
 
+        mainActivity = activity as MainActivity
         triggerBttn = view.findViewById(R.id.alarm_trigger)
         defuseBttn = view.findViewById<Button>(R.id.defuse_button)
         countDownTextView = view.findViewById<TextView>(R.id.counter_text)
         activationProgressCircle = view.findViewById<ProgressBar>(R.id.activatingProgressBar)
         triggerBttnInitialSize = triggerBttn.layoutParams.width
+        triggerButtonRadius = triggerBttn.cornerRadius
 
         triggerBttn.setOnTouchListener(object : View.OnTouchListener {
             @RequiresApi(Build.VERSION_CODES.M)
             override fun onTouch(v: View?, event: MotionEvent?): Boolean {
 
-                if (PreferencesSettings.getCode(context!!) == null){
-                    Toast.makeText(context, "PIN must first be set in settings", Toast.LENGTH_SHORT).show()
+                if (PreferencesSettings.getCode(context!!) == null) {
+                    Toast.makeText(context, "PIN must first be set in settings", Toast.LENGTH_SHORT)
+                        .show()
                     return true
                 }
-                if (activity?.checkSelfPermission(android.Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED || activity?.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-                    requestPermissions(arrayOf(android.Manifest.permission.SEND_SMS, android.Manifest.permission.ACCESS_FINE_LOCATION), REQUEST_PERMISSION_SMS_FINE_LOCATION)
+                if (activity?.checkSelfPermission(android.Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED || activity?.checkSelfPermission(
+                        android.Manifest.permission.ACCESS_FINE_LOCATION
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    requestPermissions(
+                        arrayOf(
+                            android.Manifest.permission.SEND_SMS,
+                            android.Manifest.permission.ACCESS_FINE_LOCATION
+                        ), REQUEST_PERMISSION_SMS_FINE_LOCATION
+                    )
                     return true
                 }
 
                 when (event?.action) {
                     MotionEvent.ACTION_DOWN -> {
+                        mainActivity.activeAlertBttn.visibility = GONE
                         alarm.stateMachine.transition(Alarm.Event.AlarmButtonPressed)
                     }
 
@@ -109,17 +119,25 @@ class AlarmFragment : Fragment() {
             showDefuseFragment()
         }
     }
-    fun renderIdle() {
 
+    fun renderIdle() {
         // - UI components
+        if(AlarmManager.activeAlertsExists()) {
+            mainActivity.activeAlertBttn.visibility = VISIBLE
+        } else {
+            mainActivity.activeAlertBttn.visibility = GONE
+        }
         countDownTextView.visibility = GONE
         activationProgressCircle.visibility = GONE
         defuseBttn.visibility = GONE
         triggerBttn.visibility = VISIBLE
+        triggerBttn.cornerRadius = triggerButtonRadius
         showBottomNav()
+
         // - Logic
         countDownTimer.cancel()
         removeFragmentByTag(ALARMING_FRAGMENT)
+        UserManager.stopUserLocationUpdates()
 
         //Change button color back
         //Change button sizd back
@@ -129,23 +147,21 @@ class AlarmFragment : Fragment() {
     fun renderActivating() {
 
         // - UI Components
-        hideBottomNav()
-
         countDownTextView.visibility = VISIBLE
         activationProgressCircle.visibility = VISIBLE
         defuseBttn.visibility = GONE
         triggerBttn.visibility = VISIBLE
 
         showCountDown(COUNTDOWN_ACTIVATION_LENGTH)
+        UserManager.startUsersLocationUpdates(activity!!,context!!)
 
-        //Animate progressbar pre trigger activation
         //Animate background color to red
         //Animate color change of trigger button
     }
 
     fun renderActivated() {
         hideBottomNav()
-
+        triggerBttn.cornerRadius = 0
         countDownTextView.visibility = GONE
         activationProgressCircle.visibility = GONE
         defuseBttn.visibility = GONE
@@ -167,21 +183,21 @@ class AlarmFragment : Fragment() {
         downSizeTriggerBttn()
         showDefuseFragment()
 
-        //Show CountDownTimer 10 seconds
         //Deactivate physical buttons to deter closing app to avoid alarm or switching off phone
     }
 
     fun renderAlarming() {
-        hideBottomNav()
 
+        hideBottomNav()
         triggerBttn.visibility = GONE
         countDownTextView.visibility = GONE
         defuseBttn.visibility = GONE
         activationProgressCircle.visibility = GONE
+
         removeFragmentByTag(INSERT_PIN_FRAGMENT)
         showAlarmingFragment()
-        alertContacts()
-        Toast.makeText(context,"Alarm is active - Notifying Guardians", Toast.LENGTH_LONG).show()
+        UserManager.notifyGuardians()
+        Toast.makeText(context, "Alarm is active - Notifying Guardians", Toast.LENGTH_LONG).show()
 
         //Flash screen at highest brightness between RED and White to attract attention
         //Play Siren att highest possible volume.
@@ -222,33 +238,37 @@ class AlarmFragment : Fragment() {
         params.height = triggerBttnInitialSize
         triggerBttn.layoutParams = params
     }
+
     private fun hideToolbar() {
         (activity as MainActivity).toolbar.visibility = GONE
     }
-    private fun hideBottomNav(){
+
+    private fun hideBottomNav() {
         (activity as MainActivity).bottomNav.visibility = GONE
     }
-    private fun showBottomNav(){
+
+    private fun showBottomNav() {
         (activity as MainActivity).bottomNav.visibility = VISIBLE
     }
 
     private val mLoginListener: PFLockScreenFragment.OnPFLockScreenLoginListener = object :
         PFLockScreenFragment.OnPFLockScreenLoginListener {
         override fun onCodeInputSuccessful() {
-            Toast.makeText(context,"Alarm Defused", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Alarm Defused", Toast.LENGTH_SHORT).show()
             removeFragmentByTag(INSERT_PIN_FRAGMENT)
             alarm.transition(Alarm.Event.AlarmDefused)
         }
+
         override fun onPinLoginFailed() {
             Toast.makeText(context, "Wrong PIN", Toast.LENGTH_SHORT).show()
         }
 
         override fun onFingerprintSuccessful() {
-            TODO("Not yet implemented")
+            //Unused required override
         }
 
         override fun onFingerprintLoginFailed() {
-            TODO("Not yet implemented")
+            //Unused required override
         }
     }
 
@@ -265,7 +285,7 @@ class AlarmFragment : Fragment() {
 
         builder.setMode(PFFLockScreenConfiguration.MODE_AUTH)
         val PIN = PreferencesSettings.getCode(context!!)
-        if(PIN != null){
+        if (PIN != null) {
             fragment.setEncodedPinCode(PIN)
             fragment.setLoginListener(mLoginListener)
         }
@@ -273,35 +293,21 @@ class AlarmFragment : Fragment() {
         parentFragmentManager.beginTransaction()
             .add(R.id.alarm_fragment_background_layout, fragment, INSERT_PIN_FRAGMENT).commit()
     }
-    private fun removeFragmentByTag(tag:String){
+
+    private fun removeFragmentByTag(tag: String) {
         val fragment = parentFragmentManager.findFragmentByTag(tag)
         if (fragment != null) {
             val transaction = parentFragmentManager.beginTransaction()
             transaction.remove(fragment).commit()
         }
+        if(tag == ALARMING_FRAGMENT){
+            AlarmManager.removeAlarmObjectFromServer()
+        }
     }
-    fun showAlarmingFragment(){
+
+    fun showAlarmingFragment() {
         val fragment = AlarmingFragment()
-        parentFragmentManager.beginTransaction().replace(R.id.alarm_fragment_background_layout, fragment, ALARMING_FRAGMENT).commit()
-    }
-    fun alertContacts(){
-        if(DataStore.currentUser.location.size < 1){
-            return
-        }
-
-        val alertLocation = DataStore.currentUser.location.get(DataStore.currentUser.location.lastIndex)
-        val alertLatitude = alertLocation.latitude
-        val alertLongtitude = alertLocation.longitude
-
-        val smsManager = SmsManager.getDefault()
-
-        DataStore.currentUser.guardians.forEach {guardian->
-            val currentUserName = DataStore.currentUser.name
-            val alert = "$currentUserName's safety alarm has been triggered at the following location: https://www.google.com/maps/search/?api=1&query=$alertLatitude,$alertLongtitude"
-
-            smsManager.sendTextMessage(guardian.mobilNR, null, alert, null,null)
-            Log.d(ALARM_FRAGMENT, alert)
-
-        }
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.alarm_fragment_background_layout, fragment, ALARMING_FRAGMENT).commit()
     }
 }

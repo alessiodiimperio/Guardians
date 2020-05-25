@@ -202,7 +202,9 @@ class Alarm(view : AlarmFragment) {
             }
         }
     }
-
+    fun isActive():Boolean{
+        return stateMachine.state == State.Alarming || stateMachine.state == State.AlarmingDefusable
+    }
     fun transition(event: Event) {
         stateMachine.transition(event)
     }

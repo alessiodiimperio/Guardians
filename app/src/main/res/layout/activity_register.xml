@@ -26,7 +26,7 @@
         android:layout_height="150dp"
         android:layout_marginTop="24dp"
         android:src="@drawable/ic_guardian"
-        android:tint="@color/colorAccent"
+        android:tint="@color/colorPurpleAccent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

@@ -1,8 +1,7 @@
 package Contacts
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,8 +9,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.google.firebase.storage.FirebaseStorage
-import models.DataStore
+import models.UserManager
 import se.diimperio.guardians.R
 
 class ICERecyclerAdapter(private val context: Context):RecyclerView.Adapter<ICERecyclerAdapter.ViewHolder>() {
@@ -24,37 +22,25 @@ class ICERecyclerAdapter(private val context: Context):RecyclerView.Adapter<ICER
         return ViewHolder(guardianView)
     }
 
-    override fun getItemCount() = DataStore.currentUser.guardians.size
+    override fun getItemCount() = UserManager.currentUser.guardians.size
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 
-        val guardian = DataStore.currentUser.guardians[position]
+        val guardian = UserManager.currentUser.guardians[position]
         holder.name.text = guardian.displayName
         holder.relationship.text = guardian.relationship.toString()
         holder.number.text = guardian.mobilNR
 
         holder.editButton.setOnClickListener {
-            DataStore.removeGuardian(position)
+            UserManager.removeGuardian(position)
             notifyDataSetChanged()
         }
 
         if (guardian.avatar != null) {
-            var image: Bitmap? = null
-            val storageRef = FirebaseStorage.getInstance()
-            storageRef.getReferenceFromUrl(guardian.avatar.toString()).getBytes(1024 * 1024)
-                .addOnSuccessListener { data ->
-                    if (data != null) {
-                        image = BitmapFactory.decodeByteArray(data, 0, data.size)
-                    }
-                }
-            if (image != null) {
-                holder.avatar.setImageBitmap(image)
+                holder.avatar.setImageURI(Uri.parse(guardian.avatar))
             } else {
                 holder.avatar.setBackgroundResource(R.drawable.ic_person)
             }
-        } else {
-            holder.avatar.setBackgroundResource(R.drawable.ic_person)
-        }
     }
 
     inner class ViewHolder(guardianView: View) : RecyclerView.ViewHolder(guardianView) {

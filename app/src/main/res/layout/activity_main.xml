@@ -21,6 +21,21 @@
         app:titleTextColor="?android:attr/colorBackground"
         />
 
+    <Button
+        android:id="@+id/active_alert_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/colorAlertRed"
+        android:drawableLeft="@drawable/ic_alert_on"
+        android:drawableRight="@drawable/ic_chevron_right"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:text="ACTIVE ALARM"
+        android:textColor="@color/backgroundDark"
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="@+id/activity_toolbar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/activity_toolbar" />
     <FrameLayout
         android:id="@+id/container_layout"
         android:layout_width="0dp"
