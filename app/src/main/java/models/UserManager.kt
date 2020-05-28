@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat.checkSelfPermission
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.iid.FirebaseInstanceId
 import java.lang.Exception
 
 
@@ -25,7 +26,15 @@ const val REQUEST_LOCATION = 6
 object UserManager {
 
     var db = FirebaseFirestore.getInstance()
-    val currentUser = User(null, null, null, null, null, mutableListOf())
+    val currentUser = User(null,null, null, null, null, null, mutableListOf())
+
+    val token = FirebaseInstanceId.getInstance().instanceId.addOnSuccessListener {result->
+        if(result != null){
+            currentUser.token = result.token
+            syncChangesToFirebase()
+        }
+    }
+
     lateinit var locationProviderClient :FusedLocationProviderClient
     lateinit var locationCallBack: LocationCallback
 
@@ -69,11 +78,7 @@ object UserManager {
 
                         val location = locationResult.locations[locationResult.locations.size - 1]
                         currentUser.location = MyLatLng(location.latitude, location.longitude)
-                        Toast.makeText(
-                            context,
-                            "${location.latitude}, ${location.longitude}",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Log.d(USER_MANAGER, "${currentUser.location?.latitude} & ${currentUser.location?.longitude}")
                     }
                 }
                 locationProviderClient.requestLocationUpdates(
@@ -115,7 +120,7 @@ object UserManager {
             LocationManager.NETWORK_PROVIDER
         )
     }
-    fun notifyGuardians() {
+    fun notifyGuardians(testMode:Boolean) {
         AlarmManager.uploadAlarmObjectToServer()
 
         val alertLocation = currentUser.location
@@ -125,11 +130,41 @@ object UserManager {
         val smsManager = SmsManager.getDefault()
 
         currentUser.guardians.forEach{ guardian ->
-            val alert =
-                "${currentUser.name}'s safety alarm has been triggered at the following location: https://www.google.com/maps/search/?api=1&query=$alertLatitude,$alertLongtitude"
+            val alert = if (testMode) "${currentUser.name}'s safety alarm has been triggered at the following location: https://www.google.com/maps/search/?api=1&query=$alertLatitude,$alertLongtitude" else "TESTMODE: ${currentUser.name} is testing Guardian's safety alarm from this location: https://www.google.com/maps/search/?api=1&query=$alertLatitude,$alertLongtitude"
+                smsManager.sendTextMessage(guardian.mobilNR, null, alert, null, null)
+                Log.d(ALARM_FRAGMENT, alert)
+        }
+    }
+    fun getUserLocation(activity: Activity, context: Context, onLocationResult: (location : MyLatLng) -> Unit) {
+        if (checkPermissions(context)) {
+            if (isLocationEnabled(context)) {
+                locationProviderClient =
+                    LocationServices.getFusedLocationProviderClient(context)
+                val locationRequest = LocationRequest.create().apply {
+                    numUpdates = 1
+                    priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+                }
+                locationCallBack = object : LocationCallback() {
+                    override fun onLocationResult(locationResult: LocationResult?) {
+                        super.onLocationResult(locationResult)
+                        locationResult ?: return
 
-            smsManager.sendTextMessage(guardian.mobilNR, null, alert, null, null)
-            Log.d(ALARM_FRAGMENT, alert)
+                        val location = locationResult.locations[locationResult.locations.size - 1]
+                        currentUser.location = MyLatLng(location.latitude, location.longitude)
+
+                        onLocationResult.invoke(MyLatLng(location.latitude,location.longitude))
+
+                        Log.d(USER_MANAGER, "${currentUser.location?.latitude} & ${currentUser.location?.longitude}")
+                    }
+                }
+                locationProviderClient.requestLocationUpdates(
+                    locationRequest,
+                    locationCallBack,
+                    Looper.getMainLooper()
+                )
+            }
+        } else {
+            requestPermissions(activity)
         }
     }
 }

@@ -5,20 +5,22 @@
     android:id="@+id/alarm_fragment_root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    android:background="@drawable/alarm_fragment_background_default">
 
 <androidx.constraintlayout.widget.ConstraintLayout
     android:id="@+id/alarm_fragment_background_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/background_activating_animation">
 
-    <com.google.android.material.button.MaterialButton
+    <Button
         android:id="@+id/alarm_trigger"
         android:layout_width="150dp"
         android:layout_height="150dp"
         android:insetTop="0dp"
         android:insetBottom="0dp"
-        android:text="Button"
+        android:text="@string/trigger"
         app:cornerRadius="75dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -39,14 +41,17 @@
 
     <Button
         android:id="@+id/defuse_button"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Defuse"
+        android:backgroundTint="@color/colorAlertRed"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:text="@string/defuse_bttn"
+        android:textColor="#FFFFFF"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/alarm_trigger" />
+        app:layout_constraintStart_toStartOf="parent" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

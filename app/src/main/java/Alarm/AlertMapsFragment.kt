@@ -12,32 +12,43 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import models.AlarmChangeListener
+import models.AlarmListenerObject
 import models.AlarmManager
+import models.UserManager
 import se.diimperio.guardians.R
 
 class AlertMapsFragment : Fragment() {
     private val callback = OnMapReadyCallback { googleMap ->
+        val mapBounds = LatLngBounds.builder()
 
-        val alarmLocation = AlarmManager.alarmLocations[0]
-        val alarmForGoogleMaps = alarmLocation.convertToGoogleLatLng()
+
+        //Retrieve necessary points
+
+
+        AlarmManager.alarmLocations.forEach {location->
+            googleMap.addMarker(
+                    MarkerOptions().position(location.convertToGoogleLatLng()!!)
+                        .icon(bitmapDescriptorFromVector(context!!, R.drawable.ic_location_48))
+                )
+                mapBounds.include(location.convertToGoogleLatLng())
+        }
+        val userLocation = UserManager.currentUser.location
+        mapBounds.include(userLocation?.convertToGoogleLatLng())
+        val finalBounds = mapBounds.build()
+
         googleMap.isMyLocationEnabled = true
         googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(context, R.raw.google_maps_style))
 
-        if(alarmForGoogleMaps != null) {
-            googleMap.addMarker(
-                MarkerOptions().position(alarmForGoogleMaps)
-                    .icon(bitmapDescriptorFromVector(context!!, R.drawable.ic_location_48))
-                    .title("Alert Location")
-            )
-            googleMap.moveCamera(CameraUpdateFactory.newLatLng(alarmForGoogleMaps))
-            val mapBounds = LatLngBounds.builder().include(alarmForGoogleMaps).build()
+        val cameraUpdate = CameraUpdateFactory.newLatLngBounds(finalBounds, 150)
+        googleMap.animateCamera(cameraUpdate)
 
-            val cameraUpdate = CameraUpdateFactory.newLatLngBounds(mapBounds, 250)
-            googleMap.moveCamera(cameraUpdate)
-        }
+
+
     }
 
     override fun onCreateView(

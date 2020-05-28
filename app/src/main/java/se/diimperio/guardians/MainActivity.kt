@@ -5,23 +5,39 @@ import Alarm.AlertMapsFragment
 import Contacts.ContactsFragment
 import Login.LoginActivity
 import Settings.SettingsFragment
+import android.app.ActivityManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
+import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
+import android.graphics.drawable.Icon
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
+import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
+import android.view.WindowManager
 import android.widget.Button
+import android.widget.RemoteViews
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import models.Alarm
 import models.AlarmManager
-import models.UserManager
 import models.User
+import models.UserManager
 
-
+const val ALERT_NOTIFICATION_CHANNEL:String = "ALERT_CHANNEL"
 class MainActivity() : AppCompatActivity() {
 
     lateinit var activeAlertBttn: Button
@@ -30,6 +46,8 @@ class MainActivity() : AppCompatActivity() {
     lateinit var db: FirebaseFirestore
     lateinit var auth: FirebaseAuth
 
+    lateinit var alarmFragment: AlarmFragment
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -37,12 +55,18 @@ class MainActivity() : AppCompatActivity() {
         db = FirebaseFirestore.getInstance()
         auth = FirebaseAuth.getInstance()
 
+        //Initiallize fragments for Main Activity
+        val contactsFragment = ContactsFragment()
+        alarmFragment = AlarmFragment()
+
         activeAlertBttn = findViewById(R.id.active_alert_button)
         toolbar = findViewById(R.id.activity_toolbar)
         bottomNav = findViewById(R.id.bottom_navigation)
 
         setupCurrentUser()
-        AlarmManager.setupAlarmListener(this)
+        createNotificationChannels()
+
+        AlarmManager.setupAlarmListener(this, applicationContext)
 
         activeAlertBttn.setOnClickListener {
             val mapsFragment = AlertMapsFragment()
@@ -54,7 +78,7 @@ class MainActivity() : AppCompatActivity() {
         bottomNav.setOnNavigationItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.alarm_menu_item -> {
-                    loadFragment(AlarmFragment())
+                    loadFragment(alarmFragment)
                     if (AlarmManager.activeAlertsExists()) {
                         activeAlertBttn.visibility = VISIBLE
                     } else {
@@ -63,7 +87,15 @@ class MainActivity() : AppCompatActivity() {
                     true
                 }
                 R.id.contacts_menu_item -> {
-                    loadFragment(ContactsFragment())
+                    if(UserManager.currentUser.guardians.size < 1){
+                        loadFragment(contactsFragment)
+                    } else if (checkSelfPermission(android.Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED){
+                        loadFragment(contactsFragment)
+                    } else {
+                        requestPermissions(
+                            arrayOf(android.Manifest.permission.READ_CONTACTS), 12345)
+                    }
+
                     if (AlarmManager.activeAlertsExists()) {
                         activeAlertBttn.visibility = VISIBLE
                     } else {
@@ -72,22 +104,33 @@ class MainActivity() : AppCompatActivity() {
                     true
                 }
                 R.id.settings_menu_item -> {
-                    loadFragment(SettingsFragment())
                     if (AlarmManager.activeAlertsExists()) {
                         activeAlertBttn.visibility = VISIBLE
                     } else {
                         activeAlertBttn.visibility = GONE
                     }
+                    loadFragment(SettingsFragment())
                     true
                 }
                 else -> false
             }
         }
-        bottomNav.setSelectedItemId(
-            bottomNav.getMenu().getItem(1).getItemId()
-        ) //Select middle menu ("alarm") on start
+        //Select middle menu ("alarm") on start
+        bottomNav.setSelectedItemId(bottomNav.getMenu().getItem(1).itemId
+        )
     }
 
+    private fun createNotificationChannels() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            val notificationChannel = NotificationChannel(
+                ALERT_NOTIFICATION_CHANNEL,
+                "Guardian ALERT Channel",
+                NotificationManager.IMPORTANCE_HIGH)
+            notificationChannel.description = "A Guardian Alarm has been triggered nearby!"
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(notificationChannel)
+        }
+    }
 
     private fun setupCurrentUser() {
         val currentUserId = auth.uid
@@ -118,9 +161,17 @@ class MainActivity() : AppCompatActivity() {
         val transaction = supportFragmentManager.beginTransaction()
         transaction.replace(R.id.container_layout, fragment).commit()
     }
+    fun checkForActiveAlerts() {
+        if (AlarmManager.activeAlertsExists()) {
+
+            activeAlertBttn.visibility = VISIBLE
+        } else {
+            activeAlertBttn.visibility = GONE
+        }
+    }
 
     /*
-    ****************** Remapping user input keys not working.....
+    ****************** Remapping keys.....
      */
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         when (keyCode) {
@@ -128,16 +179,29 @@ class MainActivity() : AppCompatActivity() {
             KeyEvent.KEYCODE_VOLUME_DOWN -> Log.d("KEYOVERRIDE", "Vol Down pressed") // Active
             KeyEvent.KEYCODE_VOLUME_MUTE -> Log.d("KEYOVERRIDE", "Vol Mute pressed") // Active
             KeyEvent.KEYCODE_BACK -> Log.d("KEYOVERRIDE", "Back Pressed") //Active
-            KeyEvent.KEYCODE_HOME -> Log.d("KEYOVERRIDE","Home pressed")
         }
         return true
     }
 
-    fun checkForActiveAlerts() {
-        if (AlarmManager.activeAlertsExists()) {
-            activeAlertBttn.visibility = VISIBLE
-        } else {
-            activeAlertBttn.visibility = GONE
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+
+        if(alarmFragment.alarm.stateMachine.state == Alarm.State.Alarming) {
+            (applicationContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).moveTaskToFront(
+                taskId,
+                0
+            )
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if(alarmFragment.alarm.stateMachine.state == Alarm.State.Alarming) {
+            (applicationContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).moveTaskToFront(
+                taskId,
+                0
+            )
         }
     }
 }
