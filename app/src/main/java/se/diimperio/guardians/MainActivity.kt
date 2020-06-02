@@ -8,36 +8,29 @@ import Settings.SettingsFragment
 import android.app.ActivityManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
-import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
-import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
-import android.view.WindowManager
 import android.widget.Button
-import android.widget.RemoteViews
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import models.Alarm
+import com.squareup.picasso.Picasso
+import models.AlarmMachine
 import models.AlarmManager
 import models.User
 import models.UserManager
 
-const val ALERT_NOTIFICATION_CHANNEL:String = "ALERT_CHANNEL"
+const val ALERT_NOTIFICATION_CHANNEL: String = "ALERT_CHANNEL"
+
 class MainActivity() : AppCompatActivity() {
 
     lateinit var activeAlertBttn: Button
@@ -55,7 +48,7 @@ class MainActivity() : AppCompatActivity() {
         db = FirebaseFirestore.getInstance()
         auth = FirebaseAuth.getInstance()
 
-        //Initiallize fragments for Main Activity
+        //Initialize fragments for Main Activity
         val contactsFragment = ContactsFragment()
         alarmFragment = AlarmFragment()
 
@@ -67,6 +60,20 @@ class MainActivity() : AppCompatActivity() {
         createNotificationChannels()
 
         AlarmManager.setupAlarmListener(this, applicationContext)
+
+        val isSentFromAlertNotification = intent.getBooleanExtra("maps_fragment", false).apply {
+            Log.d("TEST", "this : $this")
+            if (this) {
+                Log.d("TEST", "Sent from notification show maps fragment")
+                val mapsFragment = AlertMapsFragment()
+                loadFragment(mapsFragment)
+                activeAlertBttn.visibility = GONE
+                toolbar.visibility = GONE
+            } else {
+                Log.d("TEST", "Not sent from notification start as usual")
+            }
+        }
+        Log.d("TEST", "isSentFromNot: $isSentFromAlertNotification")
 
         activeAlertBttn.setOnClickListener {
             val mapsFragment = AlertMapsFragment()
@@ -87,13 +94,14 @@ class MainActivity() : AppCompatActivity() {
                     true
                 }
                 R.id.contacts_menu_item -> {
-                    if(UserManager.currentUser.guardians.size < 1){
+                    if (UserManager.currentUser.guardians.size < 1) {
                         loadFragment(contactsFragment)
-                    } else if (checkSelfPermission(android.Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED){
+                    } else if (checkSelfPermission(android.Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
                         loadFragment(contactsFragment)
                     } else {
                         requestPermissions(
-                            arrayOf(android.Manifest.permission.READ_CONTACTS), 12345)
+                            arrayOf(android.Manifest.permission.READ_CONTACTS), 12345
+                        )
                     }
 
                     if (AlarmManager.activeAlertsExists()) {
@@ -116,16 +124,18 @@ class MainActivity() : AppCompatActivity() {
             }
         }
         //Select middle menu ("alarm") on start
-        bottomNav.setSelectedItemId(bottomNav.getMenu().getItem(1).itemId
+        bottomNav.setSelectedItemId(
+            bottomNav.getMenu().getItem(1).itemId
         )
     }
 
     private fun createNotificationChannels() {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationChannel = NotificationChannel(
                 ALERT_NOTIFICATION_CHANNEL,
                 "Guardian ALERT Channel",
-                NotificationManager.IMPORTANCE_HIGH)
+                NotificationManager.IMPORTANCE_HIGH
+            )
             notificationChannel.description = "A Guardian Alarm has been triggered nearby!"
             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(notificationChannel)
@@ -161,9 +171,9 @@ class MainActivity() : AppCompatActivity() {
         val transaction = supportFragmentManager.beginTransaction()
         transaction.replace(R.id.container_layout, fragment).commit()
     }
+
     fun checkForActiveAlerts() {
         if (AlarmManager.activeAlertsExists()) {
-
             activeAlertBttn.visibility = VISIBLE
         } else {
             activeAlertBttn.visibility = GONE
@@ -183,11 +193,10 @@ class MainActivity() : AppCompatActivity() {
         return true
     }
 
-
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
 
-        if(alarmFragment.alarm.stateMachine.state == Alarm.State.Alarming) {
+        if (alarmFragment.alarm.stateMachine.state == AlarmMachine.State.Alarming) {
             (applicationContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).moveTaskToFront(
                 taskId,
                 0
@@ -197,7 +206,7 @@ class MainActivity() : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        if(alarmFragment.alarm.stateMachine.state == Alarm.State.Alarming) {
+        if (alarmFragment.alarm.stateMachine.state == AlarmMachine.State.Alarming) {
             (applicationContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).moveTaskToFront(
                 taskId,
                 0

@@ -2,4 +2,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="Alarm.AlarmingFragment"/>
+    tools:context="Alarm.AlarmingFragment"
+    android:background="@drawable/alarming_blink_animation"
+    android:id="@+id/alarming_fragment_background"/>

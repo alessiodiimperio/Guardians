@@ -1,28 +1,31 @@
 package Alarm
 
-import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
-import android.graphics.Color
+import android.content.Context
+import android.content.SharedPreferences
+import android.graphics.drawable.AnimationDrawable
+import android.media.AudioManager
+import android.media.MediaPlayer
+import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.Animation
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.preference.PreferenceManager
 import com.android.volley.RequestQueue
-import com.android.volley.Response
-import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
-import models.UserManager
-import org.json.JSONException
-import org.json.JSONObject
+import com.google.cloud.audit.AuditLogOrBuilder
+import se.diimperio.guardians.MainActivity
 import se.diimperio.guardians.R
+
 
 class AlarmingFragment : Fragment() {
 
-    lateinit var animator:ObjectAnimator
+    lateinit var player:MediaPlayer
+    lateinit var background:View
     private val FCM_API = "https://fcm.googleapis.com/fcm/send"
     private val serverKey =
         "key=" + "AAAAc80AMG4:APA91bENLXE7u0G6S3HW1Y4mLUAN0_xswrl4e9jCKreNbzSSNWjLkaepC_7CBj0m96AzksEl-D6wl69G-NwSyYneBsps82LntGS1zdh8EOB3qPwmxaY_NT9gTYfUmusHDBR0mgrETJxH"
@@ -41,22 +44,45 @@ class AlarmingFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        animator = ObjectAnimator.ofInt(
-            view, "backgroundColor", Color.BLUE, Color.RED, Color.BLUE)
-        blinkEffect()
+        //Get preferences
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+        val testMode = sharedPreferences.getBoolean("testmode", false)
 
-        //Not working ???
-        alertContacts()
+        //Init mediaplayer
+        player = MediaPlayer.create(activity?.applicationContext, R.raw.alarm)
 
+        //Init background animation
+        background = view.findViewById(R.id.alarming_fragment_background)
+        val animationDrawable = background.background as AnimationDrawable
+        animationDrawable.isOneShot = false
+        animationDrawable.setEnterFadeDuration(10)
+        animationDrawable.setExitFadeDuration(400)
+        animationDrawable.start()
+
+        //If testmode dont make noise
+        if(!testMode) {
+            playSound()
+        } else {
+            Toast.makeText(context, "Loud noise ringing when not TESTMODE", Toast.LENGTH_LONG).show()
+        }
     }
-    fun blinkEffect(){
-        animator.duration = 500
-        animator.repeatMode = ValueAnimator.REVERSE
-        animator.repeatCount = Animation.INFINITE
-        animator.start()
+
+    private fun playSound(){
+        val audioManager = activity?.applicationContext?.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+        audioManager.setStreamVolume(AudioManager.STREAM_ALARM, maxVolume, 0)
+        player.isLooping = true
+        player.start();
     }
+
+    override fun onDestroy() {
+        player.release()
+        super.onDestroy()
+    }
+
     private fun alertContacts(){
 
+/* FIRESTORE Cloud messaging push notification. On hold.
         val topic = "/topics/Alert" //topic has to match what the receiver subscribed to
 
         val notification = JSONObject()
@@ -92,5 +118,6 @@ class AlarmingFragment : Fragment() {
             }
         }
         requestQueue.add(jsonObjectRequest)
+ */
     }
 }

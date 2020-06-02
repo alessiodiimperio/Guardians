@@ -7,7 +7,7 @@ import com.tinder.StateMachine
 
 const val STATE_TIMER = "STATE_TIMER"
 
-class Alarm(view : AlarmFragment) {
+class AlarmMachine(view : AlarmFragment) {
 
     sealed class State {
         object Idle : State()

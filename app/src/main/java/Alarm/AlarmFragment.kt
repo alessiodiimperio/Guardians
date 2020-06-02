@@ -2,18 +2,14 @@ package Alarm
 
 import Settings.PreferencesSettings
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.PixelFormat
 import android.graphics.drawable.TransitionDrawable
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.provider.Settings
 import android.util.Log
 import android.view.*
 import android.view.View.*
@@ -30,14 +26,11 @@ import com.beautycoder.pflockscreen.PFFLockScreenConfiguration
 import com.beautycoder.pflockscreen.fragments.PFLockScreenFragment
 import com.google.android.material.button.MaterialButton
 import kotlinx.android.synthetic.main.fragment_alarm.*
-import models.ALARM_MANAGER
-import models.Alarm
+import models.AlarmMachine
 import models.AlarmManager
 import models.UserManager
 import se.diimperio.guardians.MainActivity
 import se.diimperio.guardians.R
-import java.security.Permissions
-import java.util.zip.Inflater
 
 
 const val ALARM_FRAGMENT: String = "ALARM_FRAGMENT"
@@ -52,7 +45,7 @@ const val TICK_LENGTH: Long = 1000
 class AlarmFragment : Fragment() {
 
     lateinit var mainActivity: MainActivity
-    lateinit var alarm: Alarm
+    lateinit var alarm: AlarmMachine
     lateinit var triggerBttn: MaterialButton
     lateinit var defuseBttn: Button
     lateinit var countDownTextView: TextView
@@ -86,7 +79,7 @@ class AlarmFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         //Pass fragment view to Alarm StateMachine to control ui changes on states
-        alarm = Alarm(this)
+        alarm = AlarmMachine(this)
 
         //Initiallizing components
         mainActivity = activity as MainActivity
@@ -114,7 +107,7 @@ class AlarmFragment : Fragment() {
             @RequiresApi(Build.VERSION_CODES.M)
             override fun onTouch(v: View?, event: MotionEvent?): Boolean {
 
-                Log.d(ALARM_MANAGER, "Pin exists: ${PINExists()}")
+                Log.d(ALARM_FRAGMENT, "Pin exists: ${PINExists()}")
 
                 if (!PINExists()) {
                     Toast.makeText(context, "PIN must first be set in settings", Toast.LENGTH_SHORT)
@@ -142,11 +135,11 @@ class AlarmFragment : Fragment() {
                 when (event?.action) {
                     MotionEvent.ACTION_DOWN -> {
                         mainActivity.activeAlertBttn.visibility = GONE
-                        alarm.stateMachine.transition(Alarm.Event.AlarmButtonPressed)
+                        alarm.stateMachine.transition(AlarmMachine.Event.AlarmButtonPressed)
                     }
 
                     MotionEvent.ACTION_UP -> {
-                        alarm.stateMachine.transition(Alarm.Event.AlarmButtonReleased)
+                        alarm.stateMachine.transition(AlarmMachine.Event.AlarmButtonReleased)
                     }
                 }
                 return v?.onTouchEvent(event) ?: true
@@ -260,6 +253,10 @@ class AlarmFragment : Fragment() {
         UserManager.notifyGuardians(testMode)
         Toast.makeText(context, "Alarm is active - Notifying Guardians", Toast.LENGTH_LONG).show()
 
+        if(testMode){
+            alarm.transition(AlarmMachine.Event.AlarmSetDefusable)
+        }
+
         //Flash screen at highest brightness between RED and White to attract attention
         //Play Siren att highest possible volume.
         //Deactivate physical buttons to deter closing app / Switching phone off
@@ -320,7 +317,7 @@ class AlarmFragment : Fragment() {
         override fun onCodeInputSuccessful() {
             Toast.makeText(context, "Alarm Defused", Toast.LENGTH_SHORT).show()
             removeFragmentByTag(INSERT_PIN_FRAGMENT)
-            alarm.transition(Alarm.Event.AlarmDefused)
+            alarm.transition(AlarmMachine.Event.AlarmDefused)
         }
 
         override fun onPinLoginFailed() {

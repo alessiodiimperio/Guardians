@@ -55,7 +55,7 @@ class LoginActivity : AppCompatActivity() {
     }
     private fun signIn(){
 
-        val email = usernameField.text.toString()
+        val email = usernameField.text.toString().toLowerCase()
         val password = passwordField.text.toString()
 
         if (email.isEmpty() || password.isEmpty()){

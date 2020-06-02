@@ -4,11 +4,12 @@ import android.app.Activity
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+import android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
 import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.google.android.gms.maps.GoogleMap
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import se.diimperio.guardians.ALERT_NOTIFICATION_CHANNEL
@@ -17,9 +18,10 @@ import se.diimperio.guardians.R
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-const val ALARM_MANAGER: String = "ALARM_MANAGER"
+
 
 object AlarmManager {
+    val ALARM_MANAGER: String = "ALARM_MANAGER"
 
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
@@ -29,9 +31,9 @@ object AlarmManager {
     fun setupAlarmListener(activity: Activity, context: Context) {
         // Listen on firebase if alarm object is uploaded to server.
         db.collection("alarms").addSnapshotListener { snapshot, error ->
-            Log.d(ALARM_MANAGER, "Error: $error")
 
             alarmLocations.clear()
+
             UserManager.getUserLocation(activity, context) { userLocation ->
                 if (snapshot != null) {
                     snapshot.documents.forEach { document ->
@@ -39,10 +41,11 @@ object AlarmManager {
 
                             val alarmObject = document.toObject(AlarmObject::class.java)
 
-                            if (alarmObject?.location != null && alarmObject.uid != null && alarmObject.uid != auth.uid) {
-                                if(distanceBetweenUserAndAlarmLocation(userLocation.latitude!!, userLocation.longitude!!, alarmObject.location.latitude!!, alarmObject.location.longitude!!) < 1500)
+                            if (alarmObject?.location != null && alarmObject.uid != null && alarmObject.uid != auth.uid){
+                                if (distanceBetween(userLocation, alarmObject.location) < 1500 || alarmObject.guardianUids.contains(UserManager.currentUser.uid)) {
                                     alarmLocations.add(alarmObject.location)
                                     sendNotification(activity, context)
+                                }
                             }
                         }
                     }
@@ -60,11 +63,18 @@ object AlarmManager {
         if (uid == null || location == null) {
             return
         }
-        val current = LocalDateTime.now()
+        val time = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-        val timestamp = current.format(formatter)
+        val timestamp = time.format(formatter)
+        val guardians = mutableListOf<String>()
 
-        val alarmObject = AlarmObject(uid, location, timestamp)
+        UserManager.currentUser.guardians.forEach {guardian->
+            if(guardian.uid != null){
+                guardians.add(guardian.uid.toString())
+            }
+        }
+
+        val alarmObject = AlarmObject(uid, location, timestamp, guardians)
         alarmRef.document("$uid").set(alarmObject).addOnSuccessListener {
             Log.d(ALARM_MANAGER, "Uploaded alarm successfully")
         }.addOnFailureListener { error ->
@@ -85,12 +95,15 @@ object AlarmManager {
         return alarmLocations.size > 0
     }
 
-    fun distanceBetweenUserAndAlarmLocation(
-        lat1: Double,
-        long1: Double,
-        lat2: Double,
-        long2: Double
+    fun distanceBetween(
+        userLocation: MyLatLng,
+        alarmLocation: MyLatLng
     ): Int {
+
+        val lat1 = userLocation.latitude!!
+        val long1 = userLocation.longitude!!
+        val lat2 = alarmLocation.latitude!!
+        val long2 = alarmLocation.longitude!!
 
         val radius = 6371000 // Radius of the earth in meters
         val phiOne = lat1 * Math.PI / 180
@@ -107,13 +120,22 @@ object AlarmManager {
         val d = radius * c; // Distance in meters
 
 
-        Log.d(ALARM_MANAGER, "Distance between User: ($lat1, $long1) and Alarm: ($lat2,$long2) is $d meters")
+        Log.d(
+            ALARM_MANAGER,
+            "Distance between User: ($lat1, $long1) and Alarm: ($lat2,$long2) is $d meters"
+        )
         return d.toInt() //Return distance in meters
     }
 
     fun sendNotification(activity: Activity, context: Context) {
+
         val intent = Intent(context, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(context, 0, intent, 0)
+        intent.flags = FLAG_ACTIVITY_SINGLE_TOP
+        intent.flags = FLAG_ACTIVITY_CLEAR_TOP
+        intent.putExtra("maps_fragment", true)
+
+        val pendingIntent =
+            PendingIntent.getActivity(activity, 0, intent, PendingIntent.FLAG_ONE_SHOT)
 
         val customView = RemoteViews(activity.packageName, R.layout.alert_notification)
         customView.setImageViewResource(R.id.alert_notification_icon, R.drawable.ic_alert_on)
@@ -129,6 +151,6 @@ object AlarmManager {
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()
-        notificationManager.notify(1, notification)
+        notificationManager.notify(112, notification)
     }
 }

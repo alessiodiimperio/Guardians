@@ -16,8 +16,6 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
-import models.AlarmChangeListener
-import models.AlarmListenerObject
 import models.AlarmManager
 import models.UserManager
 import se.diimperio.guardians.R
@@ -28,8 +26,6 @@ class AlertMapsFragment : Fragment() {
 
 
         //Retrieve necessary points
-
-
         AlarmManager.alarmLocations.forEach {location->
             googleMap.addMarker(
                     MarkerOptions().position(location.convertToGoogleLatLng()!!)
@@ -46,9 +42,6 @@ class AlertMapsFragment : Fragment() {
 
         val cameraUpdate = CameraUpdateFactory.newLatLngBounds(finalBounds, 150)
         googleMap.animateCamera(cameraUpdate)
-
-
-
     }
 
     override fun onCreateView(

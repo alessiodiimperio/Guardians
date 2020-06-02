@@ -1,4 +1,4 @@
-package Login
+     package Login
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
@@ -12,12 +12,15 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.iid.FirebaseInstanceId
 import models.UserManager
 import se.diimperio.guardians.MainActivity
 import se.diimperio.guardians.R
+import java.util.*
+import kotlin.collections.HashMap
 
-const     val FIREBASE : String = "FIREBASE"
-
+     const     val FIREBASE : String = "FIREBASE"
+const val REGISTER_USER:String = "REGISTER_USER"
 class RegisterActivity : AppCompatActivity() {
 
     lateinit var auth: FirebaseAuth
@@ -92,11 +95,11 @@ class RegisterActivity : AppCompatActivity() {
 
         val userId = auth.uid
         name = nameField.text.toString()
-        email = emailField.text.toString()
+        email = emailField.text.toString().toLowerCase()
         number = numberField.text.toString()
 
         val userRef =  db.collection("/users/")
-        //val emailRef = db.collection("/emailToUid/")
+        val emailRef = db.collection("/emailToUid/")
 
         UserManager.currentUser.uid = userId
         UserManager.currentUser.name = name
@@ -105,7 +108,20 @@ class RegisterActivity : AppCompatActivity() {
         UserManager.currentUser.location = null
         UserManager.currentUser.guardians = mutableListOf()
 
-        userRef.document("$userId").set(UserManager.currentUser).addOnSuccessListener {
+        FirebaseInstanceId.getInstance().instanceId.addOnSuccessListener {task->
+            if(task != null){
+                UserManager.currentUser.token = task.token
+                val emailUid = HashMap<String,String>()
+                emailUid["email"] = email
+                emailUid["uid"] = UserManager.currentUser.uid!!
+
+                emailRef.document(email).set(emailUid).addOnSuccessListener {
+                    Log.d(REGISTER_USER,"Email to Uid = $email to $userId")
+                }
+            }
+        }
+
+        userRef.document(UserManager.currentUser.uid!!).set(UserManager.currentUser).addOnSuccessListener {
             Log.d(FIREBASE, "CurrentUser object added to firestore")
             logInNewUser()
         }.addOnFailureListener {error->

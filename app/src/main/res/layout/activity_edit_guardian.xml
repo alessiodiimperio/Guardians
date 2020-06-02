@@ -4,10 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="Contacts.AddGuardian">
+    tools:context="Contacts.EditGuardian">
 
     <EditText
-        android:id="@+id/add_guardian_name_edittext"
+        android:id="@+id/edit_guardian_name_edittext"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="60dp"
@@ -16,10 +16,10 @@
         android:inputType="textPersonName"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/add_avatar_image_group" />
+        app:layout_constraintTop_toBottomOf="@+id/avatar_image_group" />
 
     <EditText
-        android:id="@+id/add_guardian_number_edittext"
+        android:id="@+id/edit_guardian_number_edittext"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -28,10 +28,10 @@
         android:inputType="phone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/add_guardian_name_edittext" />
+        app:layout_constraintTop_toBottomOf="@+id/edit_guardian_name_edittext" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/add_avatar_image_group"
+        android:id="@+id/avatar_image_group"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="50dp"
@@ -39,14 +39,14 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
-            android:id="@+id/add_guardian_avatar"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_person_accent"/>
+    <ImageView
+        android:id="@+id/edit_guardian_avatar"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_person_accent"/>
 
         <ImageView
             android:layout_width="32dp"
@@ -58,75 +58,79 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <Spinner
-        android:id="@+id/add_guardian_relationship_spinner"
+        android:id="@+id/edit_guardian_relationship_spinner"
         android:layout_width="0dp"
-            android:layout_height="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
         android:ems="10"
         android:entries="@array/relationship"
         android:inputType="textPersonName"
         android:visibility="visible"
-        app:layout_constraintEnd_toEndOf="@+id/add_guardian_number_edittext"
+        app:layout_constraintEnd_toEndOf="@+id/edit_guardian_number_edittext"
+        app:layout_constraintStart_toStartOf="@+id/edit_guardian_number_edittext"
         app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="@+id/add_guardian_number_edittext"
-        app:layout_constraintTop_toBottomOf="@+id/add_guardian_number_edittext" />
+        app:layout_constraintTop_toBottomOf="@+id/edit_guardian_number_edittext" />
 
     <ImageView
-        android:id="@+id/imageView2"
+        android:id="@+id/edit_guardian_imageView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
-        app:layout_constraintBottom_toBottomOf="@+id/add_guardian_number_edittext"
-        app:layout_constraintEnd_toStartOf="@+id/add_guardian_number_edittext"
-        app:layout_constraintTop_toTopOf="@+id/add_guardian_number_edittext"
+        app:layout_constraintBottom_toBottomOf="@+id/edit_guardian_number_edittext"
+        app:layout_constraintEnd_toStartOf="@+id/edit_guardian_number_edittext"
+        app:layout_constraintTop_toTopOf="@+id/edit_guardian_number_edittext"
         app:srcCompat="@drawable/ic_phone" />
 
     <ImageView
-        android:id="@+id/imageView3"
+        android:id="@+id/edit_guardian_imageView3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:tint="@color/colorPurpleAccent"
-        app:layout_constraintBottom_toBottomOf="@+id/add_guardian_name_edittext"
-        app:layout_constraintEnd_toStartOf="@+id/add_guardian_name_edittext"
-        app:layout_constraintTop_toTopOf="@+id/add_guardian_name_edittext"
+        app:layout_constraintBottom_toBottomOf="@+id/edit_guardian_name_edittext"
+        app:layout_constraintEnd_toStartOf="@+id/edit_guardian_name_edittext"
+        app:layout_constraintTop_toTopOf="@+id/edit_guardian_name_edittext"
         app:srcCompat="@drawable/ic_person" />
 
     <ImageView
-        android:id="@+id/imageView4"
+        android:id="@+id/edit_guardian_imageView4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
+        android:tint="@color/colorPurpleAccent"
         android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="@+id/add_guardian_relationship_spinner"
-        app:layout_constraintEnd_toStartOf="@+id/add_guardian_relationship_spinner"
-        app:srcCompat="@drawable/ic_guardian"
-        android:tint="@color/colorPurpleAccent"/>
+        app:layout_constraintBottom_toBottomOf="@+id/edit_guardian_relationship_spinner"
+        app:layout_constraintEnd_toStartOf="@+id/edit_guardian_relationship_spinner"
+        app:srcCompat="@drawable/ic_guardian" />
 
     <Button
-        android:id="@+id/add_guardian_import_button"
+        android:id="@+id/edit_guardian_save_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
-        android:drawableLeft="@drawable/ic_group_add"
-        android:text="Import Contact"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.471"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/add_guardian_relationship_spinner" />
-
-    <Button
-        android:id="@+id/add_guardian_save_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="120dp"
+        android:drawableRight="@drawable/ic_tick"
+        android:drawableTint="@android:color/black"
         android:text="save"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/edit_guardian_delete_button"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/add_guardian_import_button" />
+        app:layout_constraintTop_toBottomOf="@+id/edit_guardian_relationship_spinner" />
+
+    <Button
+        android:id="@+id/edit_guardian_delete_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/colorAlertRed"
+        android:drawableRight="@drawable/ic_delete"
+        android:drawableTint="@android:color/black"
+        android:text="Delete"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/edit_guardian_save_button"
+        app:layout_constraintTop_toTopOf="@+id/edit_guardian_save_button" />
 
     <ProgressBar
-        android:id="@+id/add_guardian_loading"
+        android:id="@+id/edit_guardian_loading"
         android:layout_width="120dp"
         android:layout_height="80dp"
         android:layout_gravity="center"
@@ -134,5 +138,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

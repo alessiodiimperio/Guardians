@@ -2,6 +2,7 @@ package Contacts
 
 import android.content.ContentResolver
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.provider.MediaStore
@@ -13,11 +14,13 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.squareup.picasso.Picasso
 import models.UserManager
 import se.diimperio.guardians.R
 import java.lang.Exception
 
-const val CONTACTS_ADAPTER:String = "CONTACTS_ADAPTER"
+const val CONTACTS_ADAPTER: String = "CONTACTS_ADAPTER"
+
 class ICERecyclerAdapter(private val context: Context) :
     RecyclerView.Adapter<ICERecyclerAdapter.ViewHolder>() {
 
@@ -34,32 +37,24 @@ class ICERecyclerAdapter(private val context: Context) :
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 
         val guardian = UserManager.currentUser.guardians[position]
+
         holder.name.text = guardian.displayName
         holder.relationship.text = guardian.relationship.toString()
         holder.number.text = guardian.mobilNR
 
         holder.editButton.setOnClickListener {
-            UserManager.removeGuardian(position)
-            notifyDataSetChanged()
+            val intent = Intent(context, EditGuardian::class.java)
+            intent.putExtra("position", position)
+            context.startActivity(intent)
         }
 
-        var avatar: Bitmap? = null
-        try {
-            avatar = MediaStore.Images.Media.getBitmap(
-                context.contentResolver,
-                Uri.parse(guardian.avatar)
-            )
-        } catch (error: Exception) {
-            Log.d(CONTACTS_ADAPTER, "Error no image at: ${error.message}")
-
-        }
-
-        if (avatar != null) {
-            holder.avatar.setImageURI(Uri.parse(guardian.avatar))
+        if (guardian.avatar != null) {
+            Picasso.get().load(guardian.avatar).into(holder.avatar)
         } else {
-            holder.avatar.setBackgroundResource(R.drawable.ic_person)
+            holder.avatar.setBackgroundResource(R.drawable.ic_person_accent)
         }
     }
+
     inner class ViewHolder(guardianView: View) : RecyclerView.ViewHolder(guardianView) {
         val relationship = guardianView.findViewById<TextView>(R.id.ice_relationship_textview)
         val name = guardianView.findViewById<TextView>(R.id.ice_fullname_textview)

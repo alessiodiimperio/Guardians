@@ -15,8 +15,8 @@ import com.google.firebase.auth.FirebaseAuth
 import se.diimperio.guardians.MainActivity
 import se.diimperio.guardians.R
 
-const val SETTINGS:String = "SETTINGS"
 class SettingsFragment : PreferenceFragmentCompat() {
+    val SETTINGS:String = "SETTINGS"
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)

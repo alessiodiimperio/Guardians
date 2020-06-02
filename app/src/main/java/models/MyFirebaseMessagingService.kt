@@ -18,7 +18,7 @@ import se.diimperio.guardians.R
 import kotlin.random.Random
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
-
+/*
     private val ALARM_CHANNEL_ID = "alarm_channel"
 
     override fun onMessageReceived(p0: RemoteMessage) {
@@ -77,4 +77,5 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         adminChannel.enableVibration(true)
         notificationManager?.createNotificationChannel(adminChannel)
     }
+ */
 }
