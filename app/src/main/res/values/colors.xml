@@ -8,5 +8,7 @@
     <color name="backgroundDark">#1E1E1E</color>
     <color name="iconGreyWhite">#A9A9A9</color>
     <color name="clearColor">#00ffffff</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
 
 </resources>

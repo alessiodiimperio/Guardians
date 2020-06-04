@@ -1,10 +1,15 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.MaterialComponents.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorAlertRed</item>
         <item name="colorAccent">@color/colorGreenBlueAccent</item>
     </style>
+
+    <style name="PFLockScreenStyle">
+    <item name="android:background">@drawable/pinlock_background</item>
+    </style>
+
 </resources>

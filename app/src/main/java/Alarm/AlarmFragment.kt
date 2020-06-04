@@ -353,6 +353,7 @@ class AlarmFragment : Fragment() {
     }
 
     private fun removeFragmentByTag(tag: String) {
+        Log.d(ALARM_FRAGMENT, "Removing fragment with TAG: $tag")
         val fragment = parentFragmentManager.findFragmentByTag(tag)
         if (fragment != null) {
             val transaction = parentFragmentManager.beginTransaction()

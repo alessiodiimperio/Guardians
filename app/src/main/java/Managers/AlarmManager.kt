@@ -12,6 +12,7 @@ import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.preference.PreferenceManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import models.AlarmObject
@@ -22,6 +23,7 @@ import se.diimperio.guardians.R
 import se.diimperio.guardians.RequestCodes
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.prefs.Preferences
 
 
 object AlarmManager {
@@ -64,7 +66,7 @@ object AlarmManager {
                                     )
                                     sendNotification(
                                         activity,
-                                        context
+                                        context, alarmObject.testmode
                                     )
                                 }
                             }
@@ -73,15 +75,20 @@ object AlarmManager {
                     //Refresh necessary UI components
                     (activity as MainActivity).checkForActiveAlerts()
                     refreshMap(activity)
+                    Log.d(ALARM_MANAGER, "Calling refreshmap after snapshot")
                 }
+                refreshMap(activity)
             } else {
                 (activity as MainActivity).checkForActiveAlerts()
                 refreshMap(activity)
+                Log.d(ALARM_MANAGER, "Calling refreshmap after snapshot == null")
+
             }
         }
     }
 
-    fun uploadAlarmObjectToServer() {
+    fun uploadAlarmObjectToServer(testmode:Boolean) {
+
         val uid = UserManager.currentUser.uid
         val location = UserManager.currentUser.location
         if (uid == null || location == null) {
@@ -99,7 +106,7 @@ object AlarmManager {
             }
         }
 
-        val alarmObject = AlarmObject(uid, location, timestamp, guardians)
+        val alarmObject = AlarmObject(uid, location, timestamp, guardians, testmode)
         alarmRef.document("$uid").set(alarmObject).addOnSuccessListener {
             Log.d(ALARM_MANAGER, "Uploaded alarm successfully")
         }.addOnFailureListener { error ->
@@ -152,7 +159,7 @@ object AlarmManager {
         return d.toInt() //Return distance in meters
     }
 
-    fun sendNotification(activity: Activity, context: Context) {
+    fun sendNotification(activity: Activity, context: Context, testmode:Boolean) {
 
         //Create clickable notification to open mainactivity. Put extra boolean to flag open maps fragment
         val intent = Intent(context, MainActivity::class.java)
@@ -163,27 +170,45 @@ object AlarmManager {
         val pendingIntent =
             PendingIntent.getActivity(activity, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 
-        val customView = RemoteViews(activity.packageName, R.layout.alert_notification)
-        customView.setImageViewResource(R.id.alert_notification_icon, R.drawable.ic_alert_on)
-        customView.setImageViewResource(
+        val customAlertView = RemoteViews(activity.packageName, R.layout.alert_notification)
+        customAlertView.setImageViewResource(R.id.alert_notification_icon, R.drawable.ic_alert_on)
+        customAlertView.setImageViewResource(
+            R.id.alert_notification_chevron,
+            R.drawable.ic_chevron_right
+        )
+        val customTestView = RemoteViews(activity.packageName, R.layout.alert_test_notification)
+        customAlertView.setImageViewResource(R.id.alert_notification_icon, R.drawable.ic_alert_on)
+        customAlertView.setImageViewResource(
             R.id.alert_notification_chevron,
             R.drawable.ic_chevron_right
         )
 
         val notificationManager = NotificationManagerCompat.from(context)
-        val notification = NotificationCompat.Builder(context, ALERT_NOTIFICATION_CHANNEL)
+
+        if(testmode){
+            val notification = NotificationCompat.Builder(context, ALERT_NOTIFICATION_CHANNEL)
             .setSmallIcon(R.drawable.ic_location_48)
-            .setCustomContentView(customView)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(true)
-            .build()
-        notificationManager.notify(RequestCodes.ALERT_NOTIFICATION, notification)
+                .setCustomContentView(customTestView)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .build()
+            notificationManager.notify(RequestCodes.ALERT_NOTIFICATION, notification)
+        } else {
+            val notification = NotificationCompat.Builder(context, ALERT_NOTIFICATION_CHANNEL)
+                .setSmallIcon(R.drawable.ic_location_48)
+                .setCustomContentView(customAlertView)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .build()
+            notificationManager.notify(RequestCodes.ALERT_NOTIFICATION, notification)
+        }
     }
 
     fun refreshMap(activity:Activity){
         //On alarm change redraw map with locations.
         val fragment = (activity as MainActivity).supportFragmentManager.findFragmentByTag(
             MAPS_FRAGMENT)
+        Log.d(ALARM_MANAGER, "fragment with tag maps: $fragment")
         if(fragment != null){
             Log.d(ALARM_MANAGER, "calling refresh map")
             val alertMapsFragment = fragment as AlertMapsFragment

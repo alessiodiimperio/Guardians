@@ -51,7 +51,8 @@
             </intent-filter>
         </activity>
         <activity android:name="Contacts.AddGuardian" />
-        <activity android:name=".MainActivity" />
+        <activity android:name=".MainActivity"
+            android:launchMode="singleTop"/>
 
         <service
             android:name="Services.MyFirebaseMessagingService"

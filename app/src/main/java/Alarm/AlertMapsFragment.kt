@@ -71,7 +71,8 @@ class AlertMapsFragment : Fragment() {
             val finalBounds = mapBounds.build()
 
             //add new bounds with some padding and animate change
-            val cameraUpdate = CameraUpdateFactory.newLatLngBounds(finalBounds, 200)
+            val cameraUpdate = CameraUpdateFactory.newLatLngBounds(finalBounds, 250)
+
             googleMap.animateCamera(cameraUpdate)
         }
     }
@@ -140,7 +141,8 @@ class AlertMapsFragment : Fragment() {
 
                 val finalBounds = mapBounds.build()
 
-                val cameraUpdate = CameraUpdateFactory.newLatLngBounds(finalBounds, 200)
+                val cameraUpdate = CameraUpdateFactory.newLatLngBounds(finalBounds, 250)
+
                 googleMap.animateCamera(cameraUpdate)
             }
         }

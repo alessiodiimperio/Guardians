@@ -26,7 +26,7 @@ import models.User
 import Managers.UserManager
 
 const val ALERT_NOTIFICATION_CHANNEL: String = "ALERT_CHANNEL"
-
+const val MAIN_ACTIVITY = "MAIN_ACTIVITY"
 class MainActivity() : AppCompatActivity() {
 
     lateinit var activeAlertBttn: Button
@@ -34,10 +34,13 @@ class MainActivity() : AppCompatActivity() {
     lateinit var toolbar: androidx.appcompat.widget.Toolbar
     lateinit var db: FirebaseFirestore
     lateinit var auth: FirebaseAuth
+    lateinit var mapsFragment:AlertMapsFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        mapsFragment = AlertMapsFragment()
 
         db = FirebaseFirestore.getInstance()
         auth = FirebaseAuth.getInstance()
@@ -52,24 +55,7 @@ class MainActivity() : AppCompatActivity() {
 
         AlarmManager.setupAlarmListener(this, applicationContext)
 
-        val isSentFromAlertNotification =
-            intent.getBooleanExtra("load_maps_fragment", false).apply {
-                if (this) {
-                    val mapsFragment = AlertMapsFragment()
-                    loadFragment(mapsFragment, MAPS_FRAGMENT)
-
-                    activeAlertBttn.visibility = GONE
-                    toolbar.visibility = GONE
-
-                    Log.d("TEST", "Sent from notification show maps fragment")
-
-                } else {
-                    Log.d("TEST", "Not sent from notification start as usual")
-                }
-            }
-
         activeAlertBttn.setOnClickListener {
-            val mapsFragment = AlertMapsFragment()
             loadFragment(mapsFragment, MAPS_FRAGMENT)
 
             activeAlertBttn.visibility = GONE
@@ -108,11 +94,9 @@ class MainActivity() : AppCompatActivity() {
         }
 
         //Select middle menu ("alarm") on start if not sent from notification
-        if (!isSentFromAlertNotification) {
             bottomNav.setSelectedItemId(
                 bottomNav.getMenu().getItem(1).itemId
             )
-        }
     }
 
     private fun createNotificationChannels() {
@@ -178,11 +162,33 @@ class MainActivity() : AppCompatActivity() {
         //If an alarm object exists show alert button on all fragments except the maps fragment
         if(AlarmManager.activeAlertsExists()){
             if(fragment.javaClass != AlertMapsFragment::class.java){
-                Log.d("MAIN", "Fragment type is: $fragment make visible")
+                Log.d(MAIN_ACTIVITY, "Fragment type is: $fragment make visible")
                 activeAlertBttn.visibility = VISIBLE
         } else {
                 activeAlertBttn.visibility = GONE
-                Log.d("MAIN", "Fragment type is: $fragment make invisible")
+                Log.d(MAIN_ACTIVITY, "Fragment type is: $fragment make invisible")
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+
+        if(intent != null){
+
+        val isSentFromAlertNotification =
+            intent.getBooleanExtra("load_maps_fragment", false).apply {
+                if (this) {
+                    loadFragment(mapsFragment, MAPS_FRAGMENT)
+
+                    activeAlertBttn.visibility = GONE
+                    toolbar.visibility = GONE
+
+                    Log.d(MAIN_ACTIVITY, "Sent from notification show maps fragment")
+
+                } else {
+                    Log.d(MAIN_ACTIVITY, "Not sent from notification start as usual")
+                }
             }
         }
     }

@@ -189,8 +189,8 @@ object UserManager {
         )
     }
 
-    fun notifyGuardians(testMode: Boolean) {
-        AlarmManager.uploadAlarmObjectToServer()
+    fun notifyGuardians(testmode: Boolean) {
+        AlarmManager.uploadAlarmObjectToServer(testmode)
 
         val alertLocation = currentUser.location
         val alertLatitude = alertLocation?.latitude
@@ -200,7 +200,7 @@ object UserManager {
 
         currentUser.guardians.forEach { guardian ->
             val alert =
-                if (testMode) "TESTMODE: ${currentUser.name} is testing Guardian's safety alarm from this location: https://www.google.com/maps/search/?api=1&query=$alertLatitude,$alertLongtitude" else "${currentUser.name}'s safety alarm has been triggered at the following location: https://www.google.com/maps/search/?api=1&query=$alertLatitude,$alertLongtitude"
+                if (testmode) "TESTMODE: ${currentUser.name} is testing Guardian's safety alarm from this location: https://www.google.com/maps/search/?api=1&query=$alertLatitude,$alertLongtitude" else "${currentUser.name}'s safety alarm has been triggered at the following location: https://www.google.com/maps/search/?api=1&query=$alertLatitude,$alertLongtitude"
 
             smsManager.sendTextMessage(guardian.phoneNumber, null, alert, null, null)
             Log.d(USER_MANAGER, alert)
