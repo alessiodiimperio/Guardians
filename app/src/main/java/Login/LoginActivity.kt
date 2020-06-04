@@ -17,12 +17,10 @@ import se.diimperio.guardians.hideKeyboard
 
 class LoginActivity : AppCompatActivity() {
 
-
     lateinit var auth:FirebaseAuth
-
     lateinit var progressBar:ProgressBar
-    lateinit var usernameField:EditText
-    lateinit var passwordField:EditText
+    lateinit var usernameEditText:EditText
+    lateinit var passwordEditText:EditText
     lateinit var loginBttn:Button
     lateinit var registerBttn:Button
 
@@ -32,16 +30,18 @@ class LoginActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
+        //UI Components
         progressBar = findViewById(R.id.login_loading)
-        usernameField = findViewById(R.id.login_username)
-        passwordField = findViewById(R.id.login_password)
-
+        usernameEditText = findViewById(R.id.login_username)
+        passwordEditText = findViewById(R.id.login_password)
         loginBttn = findViewById(R.id.login_button)
         registerBttn = findViewById(R.id.register_button)
 
+        //If logged in before proceed to main activity
         if (auth.uid != null){
             goToMainActivity()
         }
+
         loginBttn.setOnClickListener {
             hideKeyboard()
             progressBar.visibility = VISIBLE
@@ -53,10 +53,10 @@ class LoginActivity : AppCompatActivity() {
             goToRegisterActivity()
         }
     }
-    private fun signIn(){
 
-        val email = usernameField.text.toString().toLowerCase()
-        val password = passwordField.text.toString()
+    private fun signIn(){
+        val email = usernameEditText.text.toString().toLowerCase()
+        val password = passwordEditText.text.toString()
 
         if (email.isEmpty() || password.isEmpty()){
            Toast.makeText(this,"Email and password required", Toast.LENGTH_LONG).show()

@@ -13,10 +13,9 @@ import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.iid.FirebaseInstanceId
-import models.UserManager
+import Managers.UserManager
 import se.diimperio.guardians.MainActivity
 import se.diimperio.guardians.R
-import java.util.*
 import kotlin.collections.HashMap
 
      const     val FIREBASE : String = "FIREBASE"
@@ -25,12 +24,11 @@ class RegisterActivity : AppCompatActivity() {
 
     lateinit var auth: FirebaseAuth
     lateinit var db:FirebaseFirestore
-
     lateinit var progressBar:ProgressBar
-    lateinit var nameField: EditText
-    lateinit var emailField: EditText
-    lateinit var passwordField: EditText
-    lateinit var numberField: EditText
+    lateinit var nameEditText: EditText
+    lateinit var emailEditText: EditText
+    lateinit var passwordEditText: EditText
+    lateinit var numberEditText: EditText
     lateinit var registerBttn:Button
     lateinit var name:String
     lateinit var email:String
@@ -45,11 +43,12 @@ class RegisterActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
+        //Ui Components
         progressBar = findViewById(R.id.register_loading)
-        nameField = findViewById(R.id.register_name)
-        emailField = findViewById(R.id.register_email)
-        passwordField = findViewById(R.id.register_password)
-        numberField = findViewById(R.id.register_number)
+        nameEditText = findViewById(R.id.register_name)
+        emailEditText = findViewById(R.id.register_email)
+        passwordEditText = findViewById(R.id.register_password)
+        numberEditText = findViewById(R.id.register_number)
         registerBttn = findViewById(R.id.registerActivity_register_button)
 
         registerBttn.setOnClickListener {
@@ -60,13 +59,16 @@ class RegisterActivity : AppCompatActivity() {
     private fun signUp() {
 
         progressBar.visibility = VISIBLE
-        name = nameField.text.toString()
-        email = emailField.text.toString()
-        password = passwordField.text.toString()
-        number = numberField.text.toString()
 
+        //Get strings from edittexts
+        name = nameEditText.text.toString()
+        email = emailEditText.text.toString()
+        password = passwordEditText.text.toString()
+        number = numberEditText.text.toString()
+
+        //Check so they are not empty
         if (name.isEmpty() || email.isEmpty() || password.isEmpty() || number.isEmpty()) {
-            Toast.makeText(this, "Fill in all the required fields", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Fill in the required fields", Toast.LENGTH_SHORT).show()
             progressBar.visibility = GONE
             return
         }
@@ -93,10 +95,11 @@ class RegisterActivity : AppCompatActivity() {
     }
     private fun saveUserToFirebase(){
 
+        //Save user to users and store create a reference between email and uid
         val userId = auth.uid
-        name = nameField.text.toString()
-        email = emailField.text.toString().toLowerCase()
-        number = numberField.text.toString()
+        name = nameEditText.text.toString()
+        email = emailEditText.text.toString().toLowerCase()
+        number = numberEditText.text.toString()
 
         val userRef =  db.collection("/users/")
         val emailRef = db.collection("/emailToUid/")
@@ -121,28 +124,15 @@ class RegisterActivity : AppCompatActivity() {
             }
         }
 
-        userRef.document(UserManager.currentUser.uid!!).set(UserManager.currentUser).addOnSuccessListener {
+        userRef.document(UserManager.currentUser.uid!!).set(
+            UserManager.currentUser).addOnSuccessListener {
             Log.d(FIREBASE, "CurrentUser object added to firestore")
             logInNewUser()
+
         }.addOnFailureListener {error->
             Log.d(FIREBASE, "Exception: $error ")
             progressBar.visibility = GONE
         }
-
-        /*
-        Try to get email to uid to connet users that have the app installed together for device to device push notifications
-
-        if(email != null || email.isNotEmpty()){
-            emailRef.document("$email").set("$userId")
-                .addOnSuccessListener {
-                    Log.d(FIREBASE, "email to uid added to firestore")
-            }
-                .addOnFailureListener{
-                    Log.d(FIREBASE, "email to uid failed")
-                }
-        }
-
-         */
     }
     private fun logInNewUser(){
         val intent = Intent(this, MainActivity::class.java)

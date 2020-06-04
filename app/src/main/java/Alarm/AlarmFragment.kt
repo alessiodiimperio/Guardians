@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
-import android.graphics.PixelFormat
 import android.graphics.drawable.TransitionDrawable
 import android.os.Build
 import android.os.Bundle
@@ -25,10 +24,9 @@ import androidx.preference.PreferenceManager
 import com.beautycoder.pflockscreen.PFFLockScreenConfiguration
 import com.beautycoder.pflockscreen.fragments.PFLockScreenFragment
 import com.google.android.material.button.MaterialButton
-import kotlinx.android.synthetic.main.fragment_alarm.*
-import models.AlarmMachine
-import models.AlarmManager
-import models.UserManager
+import Managers.AlarmMachine
+import Managers.AlarmManager
+import Managers.UserManager
 import se.diimperio.guardians.MainActivity
 import se.diimperio.guardians.R
 
@@ -46,15 +44,14 @@ class AlarmFragment : Fragment() {
 
     lateinit var mainActivity: MainActivity
     lateinit var alarm: AlarmMachine
-    lateinit var triggerBttn: MaterialButton
+    lateinit var triggerBttn:MaterialButton
     lateinit var defuseBttn: Button
     lateinit var countDownTextView: TextView
     lateinit var activationProgressCircle: ProgressBar
     lateinit var countDownTimer: CountDownTimer
     lateinit var background: View
     lateinit var backgroundAnimation: TransitionDrawable
-    lateinit var triggerButtonAnimation: TransitionDrawable
-    var canOverlay = false
+    //lateinit var triggerButtonAnimation: AnimationDrawable
 
     var triggerBttnInitialSize = 0
     var triggerButtonRadius = 0
@@ -78,7 +75,7 @@ class AlarmFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        //Pass fragment view to Alarm StateMachine to control ui changes on states
+        //Pass fragment view to Alarm StateMachine to control UI changes for states
         alarm = AlarmMachine(this)
 
         //Initiallizing components
@@ -87,18 +84,16 @@ class AlarmFragment : Fragment() {
         defuseBttn = view.findViewById<Button>(R.id.defuse_button)
         countDownTextView = view.findViewById<TextView>(R.id.counter_text)
         activationProgressCircle = view.findViewById<ProgressBar>(R.id.activatingProgressBar)
-        triggerBttnInitialSize =
-            triggerBttn.layoutParams.width //save button initial size to restore size on return to idle state
-        triggerButtonRadius =
-            triggerBttn.cornerRadius // save initial radius to restore circular shape on return to idle
-        background = alarm_fragment_background_layout
-
+        triggerBttnInitialSize = triggerBttn.layoutParams.width //save button initial size to restore size on return to idle state
+        triggerButtonRadius = triggerBttn.cornerRadius // save initial radius to restore circular shape on return to idle
+        background = view.findViewById(R.id.alarm_fragment_background_layout) //Get view to animate background on trigger press
 
         hideActionBar() //Cleaner look without actionbar in this fragment
 
         //check if is in Testmode
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         testMode = sharedPreferences.getBoolean("testmode", false)
+
         if (testMode) {
             setupTestMode()
         }
@@ -115,7 +110,6 @@ class AlarmFragment : Fragment() {
                     return true
                 }
 
-
                 val permissions = arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.SEND_SMS)
 
                 if (!hasPermissions(context!!, permissions)) {
@@ -123,7 +117,7 @@ class AlarmFragment : Fragment() {
                         REQUEST_PERMISSION_ALARMING)
                     return true
                 }
-                /*
+                /* System overlay on hold
                 if (!Settings.canDrawOverlays(context)) {
                     getOverlayPermission()
                 }
@@ -151,7 +145,7 @@ class AlarmFragment : Fragment() {
         }
     }
 
-    fun renderIdle() { //Render UI to Idle State
+    fun renderStateIdle() {
         // - UI components
         if (AlarmManager.activeAlertsExists()) {
             mainActivity.activeAlertBttn.visibility = VISIBLE
@@ -169,17 +163,16 @@ class AlarmFragment : Fragment() {
         } else {
             triggerBttn.setBackgroundColor(resources.getColor(R.color.colorPurpleAccent))
         }
+
         backgroundAnimation.reverseTransition(500)
-        //triggerButtonAnimation.reverseTransition(500)
 
         // - Logic
         countDownTimer.cancel()
         removeFragmentByTag(ALARMING_FRAGMENT)
         UserManager.stopUserLocationUpdates()
-
     }
 
-    fun renderActivating() {
+    fun renderStateActivating() {
         // - UI Components
         countDownTextView.visibility = VISIBLE
         activationProgressCircle.visibility = VISIBLE
@@ -200,7 +193,7 @@ class AlarmFragment : Fragment() {
             backgroundAnimation =
                 resources.getDrawable(R.drawable.background_activating_animation) as TransitionDrawable
             triggerBttn.setBackgroundColor(resources.getColor(R.color.colorAlertRed))
-            //triggerButtonAnimation = resources.getDrawable(R.drawable.trigger_button_activating_animation) as TransitionDrawable
+            //triggerButtonAnimation = resources.getDrawable(R.drawable.trigger_button_activating_animation) as AnimationDrawable
         }
 
         background.background = backgroundAnimation
@@ -208,66 +201,67 @@ class AlarmFragment : Fragment() {
 
         //Trigger animations not working atm
         //triggerBttn.background = triggerButtonAnimation
-        //triggerButtonAnimation.startTransition(5000)
-
-
+        //triggerButtonAnimation.start()
     }
 
-    fun renderActivated() {
-        hideBottomNav()
+    fun renderStateActivated() {
+        // UI Components
         countDownTextView.visibility = GONE
         activationProgressCircle.visibility = GONE
         defuseBttn.visibility = GONE
         triggerBttn.visibility = VISIBLE
+        hideBottomNav()
         upSizeTriggerBttn()
 
         //Animations not working atm
-        //triggerButtonAnimation = resources.getDrawable(R.drawable.trigger_button_activated_animation) as TransitionDrawable
+        //triggerButtonAnimation = resources.getDrawable(R.drawable.trigger_activated_pulsating_animation) as AnimationDrawable
         //triggerBttn.background = triggerButtonAnimation
-        //triggerButtonAnimation.startTransition(0)
+        //triggerButtonAnimation.start()
         //Initiallize button pulsating animation
     }
 
-    fun renderDefusing() {
-        hideBottomNav()
+    fun renderStateDefusing() {
+        //UI Components
         countDownTextView.visibility = VISIBLE
         triggerBttn.visibility = GONE
         defuseBttn.visibility = GONE
         activationProgressCircle.visibility = GONE
+        hideBottomNav()
         showCountDown(COUNTDOWN_PIN_LENGTH)
         downSizeTriggerBttn()
-        showDefuseFragment()
 
-        //Deactivate physical buttons to deter closing app to avoid alarm or switching off phone
+        //Logic
+        showDefuseFragment()
     }
 
-    fun renderAlarming() {
-        hideBottomNav()
+    fun renderStateAlarming() {
+        //UI Components
         triggerBttn.visibility = GONE
         countDownTextView.visibility = GONE
         defuseBttn.visibility = GONE
         activationProgressCircle.visibility = GONE
+        hideBottomNav()
 
+
+        //Logic
         removeFragmentByTag(INSERT_PIN_FRAGMENT)
         showAlarmingFragment()
         UserManager.notifyGuardians(testMode)
-        Toast.makeText(context, "Alarm is active - Notifying Guardians", Toast.LENGTH_LONG).show()
 
         if(testMode){
+            //In testmode make alarm defusable directly
             alarm.transition(AlarmMachine.Event.AlarmSetDefusable)
         }
-
-        //Flash screen at highest brightness between RED and White to attract attention
-        //Play Siren att highest possible volume.
-        //Deactivate physical buttons to deter closing app / Switching phone off
     }
 
-    fun renderAlarmingDefusable() {
-        hideBottomNav()
+    fun renderStateAlarmingDefusable() {
+        //UI Components
         triggerBttn.visibility = GONE
         countDownTextView.visibility = GONE
         defuseBttn.visibility = VISIBLE
         activationProgressCircle.visibility = GONE
+
+        hideBottomNav()
     }
 
     private fun showCountDown(countLength: Long) {
@@ -277,7 +271,6 @@ class AlarmFragment : Fragment() {
                 activationProgressCircle.progress =
                     (millisUntilFinished / countLength * 100).toInt()
             }
-
             override fun onFinish() {
                 countDownTimer.cancel()
             }
@@ -285,6 +278,8 @@ class AlarmFragment : Fragment() {
     }
 
     private fun upSizeTriggerBttn() {
+        //Trigger button change text and size to fit screen
+        triggerBttn.text = getString(R.string.active)
         triggerBttn.cornerRadius = 0
         val params: ViewGroup.LayoutParams = triggerBttn.layoutParams
         params.width = ViewGroup.LayoutParams.MATCH_PARENT
@@ -293,6 +288,9 @@ class AlarmFragment : Fragment() {
     }
 
     private fun downSizeTriggerBttn() {
+        //Trigger button change back to original size and text
+        if(testMode) triggerBttn.text = getString(R.string.testmode) else triggerBttn.text = getString(
+                    R.string.trigger)
         triggerBttn.cornerRadius = triggerButtonRadius
         val params: ViewGroup.LayoutParams = triggerBttn.layoutParams
         params.width = triggerBttnInitialSize
@@ -315,13 +313,12 @@ class AlarmFragment : Fragment() {
     private val mLoginListener: PFLockScreenFragment.OnPFLockScreenLoginListener = object :
         PFLockScreenFragment.OnPFLockScreenLoginListener {
         override fun onCodeInputSuccessful() {
-            Toast.makeText(context, "Alarm Defused", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.alarm_defused), Toast.LENGTH_SHORT).show()
             removeFragmentByTag(INSERT_PIN_FRAGMENT)
             alarm.transition(AlarmMachine.Event.AlarmDefused)
         }
-
         override fun onPinLoginFailed() {
-            Toast.makeText(context, "Wrong PIN", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getString(R.string.wrong_pin), Toast.LENGTH_SHORT).show()
         }
 
         override fun onFingerprintSuccessful() {
@@ -337,7 +334,7 @@ class AlarmFragment : Fragment() {
         defuseBttn.visibility = GONE
         val builder =
             PFFLockScreenConfiguration.Builder(context)
-                .setTitle("Insert PIN to defuse Alarm")
+                .setTitle(getString(R.string.insert_pin_to_defuse))
                 .setCodeLength(4)
                 .setClearCodeOnError(true)
                 .setUseFingerprint(false)
@@ -367,8 +364,9 @@ class AlarmFragment : Fragment() {
     }
 
     fun showAlarmingFragment() {
-        val windowManager: WindowManager =
-            context?.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        /*
+        On Hold - Alert System Overlay
+        val windowManager: WindowManager = context?.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val layoutParams: WindowManager.LayoutParams = WindowManager.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT,
@@ -377,11 +375,11 @@ class AlarmFragment : Fragment() {
             PixelFormat.TRANSLUCENT
         )
         layoutParams.gravity = Gravity.CENTER_HORIZONTAL or Gravity.CENTER_VERTICAL
+
+        windowManager.addView(activity?.findViewById(R.id.alarm_fragment_background_layout),layoutParams)
+*/
         val fragment = AlarmingFragment()
             parentFragmentManager.beginTransaction().replace(R.id.alarm_fragment_background_layout, fragment, ALARMING_FRAGMENT).commit()
-
-        //windowManager.addView(activity?.findViewById(R.id.alarm_fragment_background_layout),layoutParams)
-
     }
 
     fun setupTestMode() {
@@ -397,10 +395,14 @@ class AlarmFragment : Fragment() {
         var hasPermission = true
         permissions.forEach { permission->
             hasPermission = (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED)
+            if(!hasPermission){
+                return false
+            }
         }
         Log.d(ALARM_FRAGMENT, "hasPermission: $hasPermission")
         return hasPermission
     }
+
 /*  OVERLAY PERMISSIONS ON HOLD----
     private fun getOverlayPermission() {
         val intent = Intent(

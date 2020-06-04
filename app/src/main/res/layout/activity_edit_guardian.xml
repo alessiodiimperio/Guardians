@@ -10,7 +10,7 @@
         android:id="@+id/edit_guardian_name_edittext"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="60dp"
+        android:layout_marginTop="50dp"
         android:ems="10"
         android:hint="Guardian Name..."
         android:inputType="textPersonName"
@@ -29,6 +29,18 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/edit_guardian_name_edittext" />
+
+    <EditText
+        android:id="@+id/edit_guardian_email_edittext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:ems="10"
+        android:hint="Guardian Email..."
+        android:inputType="textEmailAddress"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/edit_guardian_number_edittext" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/avatar_image_group"
@@ -69,7 +81,7 @@
         app:layout_constraintEnd_toEndOf="@+id/edit_guardian_number_edittext"
         app:layout_constraintStart_toStartOf="@+id/edit_guardian_number_edittext"
         app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintTop_toBottomOf="@+id/edit_guardian_number_edittext" />
+        app:layout_constraintTop_toBottomOf="@+id/edit_guardian_email_edittext" />
 
     <ImageView
         android:id="@+id/edit_guardian_imageView2"
@@ -103,11 +115,23 @@
         app:layout_constraintEnd_toStartOf="@+id/edit_guardian_relationship_spinner"
         app:srcCompat="@drawable/ic_guardian" />
 
+    <ImageView
+        android:id="@+id/edit_guardian_imageView5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:tint="@color/colorPurpleAccent"
+        android:visibility="visible"
+        app:layout_constraintTop_toTopOf="@id/edit_guardian_email_edittext"
+        app:layout_constraintBottom_toBottomOf="@+id/edit_guardian_email_edittext"
+        app:layout_constraintEnd_toStartOf="@+id/edit_guardian_email_edittext"
+        app:srcCompat="@drawable/ic_email" />
+
     <Button
         android:id="@+id/edit_guardian_save_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="120dp"
+        android:layout_marginTop="100dp"
         android:drawableRight="@drawable/ic_tick"
         android:drawableTint="@android:color/black"
         android:text="save"

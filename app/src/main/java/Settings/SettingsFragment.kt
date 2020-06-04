@@ -5,6 +5,7 @@ import Login.LoginActivity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.Toast
 import androidx.preference.Preference
@@ -66,6 +67,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
         (activity as MainActivity).toolbar.setNavigationIcon(R.drawable.ic_settings)
     }
     fun createPINFragment() {
+        (activity as MainActivity).toolbar.visibility = GONE
+
         val builder =
             PFFLockScreenConfiguration.Builder(context)
                 .setTitle("Create PIN")
@@ -89,7 +92,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
     fun removeFragmentByTag(tag:String){
         val fragment = parentFragmentManager.findFragmentByTag(tag)
         if(fragment != null) {
-            parentFragmentManager.beginTransaction().remove(fragment).commit()
+            when(tag){
+                CREATE_PIN_FRAGMENT ->{
+                    parentFragmentManager.beginTransaction().remove(fragment).commit()
+                    (activity as MainActivity).toolbar.visibility = VISIBLE
+                }
+            }
         }
     }
 }

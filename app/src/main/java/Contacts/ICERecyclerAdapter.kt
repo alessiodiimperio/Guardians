@@ -1,12 +1,7 @@
 package Contacts
 
-import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.net.Uri
-import android.provider.MediaStore
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,9 +10,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.squareup.picasso.Picasso
-import models.UserManager
+import Managers.UserManager
 import se.diimperio.guardians.R
-import java.lang.Exception
 
 const val CONTACTS_ADAPTER: String = "CONTACTS_ADAPTER"
 
@@ -40,9 +34,12 @@ class ICERecyclerAdapter(private val context: Context) :
 
         holder.name.text = guardian.displayName
         holder.relationship.text = guardian.relationship.toString()
-        holder.number.text = guardian.mobilNR
+        holder.number.text = guardian.phoneNumber
+        holder.email.text = guardian.email
 
         holder.editButton.setOnClickListener {
+
+            //Edit button within cardview to edit guardian att given position
             val intent = Intent(context, EditGuardian::class.java)
             intent.putExtra("position", position)
             context.startActivity(intent)
@@ -61,7 +58,7 @@ class ICERecyclerAdapter(private val context: Context) :
         val editButton = guardianView.findViewById<ImageButton>(R.id.ice_edit_button)
         val avatar = guardianView.findViewById<ImageView>(R.id.ice_avatar_imageview)
         val number = guardianView.findViewById<TextView>(R.id.ice_phone_number)
-
+        val email = guardianView.findViewById<TextView>(R.id.ice_email)
     }
 }
 

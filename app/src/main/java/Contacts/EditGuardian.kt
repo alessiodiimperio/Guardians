@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
 import android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -14,35 +13,35 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.storage.FirebaseStorage
 import com.squareup.picasso.Picasso
-import models.UserManager
+import Managers.UserManager
 import se.diimperio.guardians.R
 import se.diimperio.guardians.RequestCodes
 import java.util.*
-import kotlin.math.E
 
 class EditGuardian : AppCompatActivity() {
     val EDIT_GUARDIAN = "EDIT_GUARDIAN"
-    lateinit var guardianName: EditText
-    lateinit var guardianNumber: EditText
-    lateinit var guardianAvatar: ImageView
-    lateinit var guardianRelation: Spinner
+    lateinit var guardianNameEditText: EditText
+    lateinit var guardianNumberEditText: EditText
+    lateinit var guardianEmailEditText:EditText
+    lateinit var guardianAvatarImageView: ImageView
+    lateinit var guardianRelationSpinner: Spinner
     lateinit var progressBar: ProgressBar
-
-    lateinit var saveGuardian: Button
-    lateinit var deleteGuardian:Button
-    var avatarUri: Uri? = null
+    lateinit var saveGuardianBttn: Button
+    lateinit var deleteGuardianBttn:Button
     var position = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_guardian)
 
-        guardianName = findViewById(R.id.edit_guardian_name_edittext)
-        guardianNumber = findViewById(R.id.edit_guardian_number_edittext)
-        guardianAvatar = findViewById(R.id.edit_guardian_avatar)
-        guardianRelation = findViewById<Spinner>(R.id.edit_guardian_relationship_spinner)
-        saveGuardian = findViewById(R.id.edit_guardian_save_button)
-        deleteGuardian = findViewById(R.id.edit_guardian_delete_button)
+        //UI Components
+        guardianNameEditText = findViewById(R.id.edit_guardian_name_edittext)
+        guardianNumberEditText = findViewById(R.id.edit_guardian_number_edittext)
+        guardianEmailEditText = findViewById(R.id.edit_guardian_email_edittext)
+        guardianAvatarImageView = findViewById(R.id.edit_guardian_avatar)
+        guardianRelationSpinner = findViewById<Spinner>(R.id.edit_guardian_relationship_spinner)
+        saveGuardianBttn = findViewById(R.id.edit_guardian_save_button)
+        deleteGuardianBttn = findViewById(R.id.edit_guardian_delete_button)
         progressBar = findViewById(R.id.edit_guardian_loading)
 
         position = intent.extras?.get("position") as Int
@@ -51,42 +50,48 @@ class EditGuardian : AppCompatActivity() {
 
         setupEditFields(position)
 
-        guardianAvatar.setOnClickListener {
+        guardianAvatarImageView.setOnClickListener {
             choosePicture()
         }
-        saveGuardian.setOnClickListener {
+        saveGuardianBttn.setOnClickListener {
             saveChanges(position)
         }
-        deleteGuardian.setOnClickListener {
+        deleteGuardianBttn.setOnClickListener {
             deleteGuardian(position)
         }
     }
 
     fun setupEditFields(position: Int){
+
         val currentGuardian = UserManager.currentUser.guardians[position]
 
-        guardianName.setText(currentGuardian.displayName)
-        guardianNumber.setText(currentGuardian.mobilNR)
+        //Setup edittexts
+        guardianNameEditText.setText(currentGuardian.displayName)
+        guardianNumberEditText.setText(currentGuardian.phoneNumber)
+        guardianEmailEditText.setText(currentGuardian.email)
 
+        //Setup spinner
         val relationValues = resources.getStringArray(R.array.relationship)
         val index = relationValues.indexOf(currentGuardian.relationship.toString())
-        guardianRelation.setSelection(index)
+        guardianRelationSpinner.setSelection(index)
 
+        //Setup avatar
         if(currentGuardian.avatar != null){
             try{
-                Picasso.get().load(currentGuardian.avatar).into(guardianAvatar)
+                Picasso.get().load(currentGuardian.avatar).into(guardianAvatarImageView)
                 Log.d(EDIT_GUARDIAN, "AVATAR:${currentGuardian.avatar}")
 
             } catch (error:Exception){
                 Log.d(EDIT_GUARDIAN,"Error: $error")
                 Log.d(EDIT_GUARDIAN, "AVATAR: ${currentGuardian.avatar}")
-                guardianAvatar.setImageResource(R.drawable.ic_person_accent)
+                guardianAvatarImageView.setImageResource(R.drawable.ic_person_accent)
             }
+        } else {
+            guardianAvatarImageView.setImageResource(R.drawable.ic_person_accent)
         }
-
     }
-    fun choosePicture(){
 
+    fun choosePicture(){
         if(checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED){
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI)
             val mimeTypes =
@@ -102,19 +107,22 @@ class EditGuardian : AppCompatActivity() {
 
     fun saveChanges(position:Int){
 
-        val name = guardianName.text.toString()
-        val number = guardianNumber.text.toString()
-        val relation = guardianRelation.selectedItem.toString()
+        val name = guardianNameEditText.text.toString()
+        val number = guardianNumberEditText.text.toString()
+        val email = guardianEmailEditText.text.toString()
+        val relation = guardianRelationSpinner.selectedItem.toString()
 
         UserManager.currentUser.guardians[position].displayName = name
-        UserManager.currentUser.guardians[position].mobilNR = number
+        UserManager.currentUser.guardians[position].phoneNumber = number
+        UserManager.currentUser.guardians[position].email = email
         UserManager.currentUser.guardians[position].relationship = relation
 
-        if(avatarUri != null){
-            UserManager.currentUser.guardians[position].avatar = avatarUri.toString()
-            Log.d(EDIT_GUARDIAN, "avatarUri: $avatarUri")
+        UserManager.syncGuardianUids {
+            //Check if guardian email has corresponding uid and sync it
+
+            Log.d(EDIT_GUARDIAN,"Saving and syncing changes and uids")
+            UserManager.syncChangesToFirebase()
         }
-        UserManager.syncChangesToFirebase()
         finish()
     }
     fun deleteGuardian(position:Int){
@@ -131,9 +139,9 @@ class EditGuardian : AppCompatActivity() {
                     val selectedImage = data?.data
 
                     if(selectedImage != null){
-                        uploadImageToFirebaseStorage(selectedImage){ uri->
-                            Picasso.get().load(uri).into(guardianAvatar)
-                            UserManager.currentUser.guardians[position].avatar = uri.toString()
+                        uploadImageToFirebaseStorage(selectedImage){ url->
+                            Picasso.get().load(url).into(guardianAvatarImageView)
+                            UserManager.currentUser.guardians[position].avatar = url.toString()
                             UserManager.syncChangesToFirebase()
                         }
                     }
@@ -141,22 +149,23 @@ class EditGuardian : AppCompatActivity() {
             }
         }
     }
+
     private fun uploadImageToFirebaseStorage(photoUri:Uri, callback:(photoUri:Uri)->Unit) {
         if (photoUri == null) return
 
         val filename = UUID.randomUUID().toString()
-        val ref = FirebaseStorage.getInstance().getReference("/images/$filename")
+        val imagesRef = FirebaseStorage.getInstance().getReference("/images/$filename")
 
-        ref.putFile(photoUri)
+        imagesRef.putFile(photoUri)
             .addOnSuccessListener {
-                Log.d("Main","Sucessfully uploaded image: ${it.metadata?.path}")
+                Log.d(EDIT_GUARDIAN,"Image uploaded: ${it.metadata?.path}")
 
-                ref.downloadUrl.addOnSuccessListener {uri->
-                    callback.invoke(uri)
+                imagesRef.downloadUrl.addOnSuccessListener { url->
+                    callback.invoke(url)
                 }
             }
             .addOnFailureListener {
-                Log.d("Main", "Failed to save photo")
+                Log.d(EDIT_GUARDIAN, "Failed to upload image")
             }
     }
 }

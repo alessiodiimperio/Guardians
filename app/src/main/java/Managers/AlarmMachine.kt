@@ -1,4 +1,4 @@
-package models
+package Managers
 
 import Alarm.AlarmFragment
 import android.os.Handler
@@ -137,7 +137,7 @@ class AlarmMachine(view : AlarmFragment) {
                     Log.d("STATE_MACHINE", "AlarmButton Pressed")
 
                     handler.postDelayed(transitionToActivatedState, 5000)
-                    view.renderActivating()
+                    view.renderStateActivating()
 
                 }
 
@@ -145,7 +145,7 @@ class AlarmMachine(view : AlarmFragment) {
 
                     Log.d("STATE_MACHINE", "AlarmButton trigger is now active")
 
-                    view.renderActivated()
+                    view.renderStateActivated()
 
                     //Set up connection to firebase
                     //Update GPS location to firebase every X minutes
@@ -156,7 +156,7 @@ class AlarmMachine(view : AlarmFragment) {
                         State.Activating -> {
                             Log.d("STATE_MACHINE", "AlarmButton trigger released before activating")
 
-                            view.renderIdle()
+                            view.renderStateIdle()
 
                             handler.removeCallbacks(transitionToActivatedState)
                         }
@@ -164,7 +164,7 @@ class AlarmMachine(view : AlarmFragment) {
                         State.Activated -> {
                             Log.d("STATE_MACHINE", "Alarm has been activated. 10 seconds to defuse")
 
-                            view.renderDefusing()
+                            view.renderStateDefusing()
 
                             //Start firebase countdown to trigger alarm. so in case phone is broken/switched off.. alarm still goes off.
                             handler.postDelayed(transitionToAlarmTriggered, 10000)
@@ -177,7 +177,7 @@ class AlarmMachine(view : AlarmFragment) {
                     Log.d("STATE_MACHINE", "Alarm has been defused")
                     handler.removeCallbacks(transitionToAlarmTriggered)
 
-                    view.renderIdle()
+                    view.renderStateIdle()
                     //Notify firebase Alarm Has been defused
                 }
 
@@ -187,7 +187,7 @@ class AlarmMachine(view : AlarmFragment) {
                     //Set off Alarm to contacts
                     //Update current location to firebase and Alert anyone in near proximity with app. approx 1km radius from alarm trigger location
 
-                    view.renderAlarming()
+                    view.renderStateAlarming()
 
                     handler.postDelayed(transitionAlarmToDefusableState, 10000)
 
@@ -196,7 +196,7 @@ class AlarmMachine(view : AlarmFragment) {
 
                     Log.d("STATE_MACHINE", "Alarm has changed to a defusable state")
 
-                    view.renderAlarmingDefusable()
+                    view.renderStateAlarmingDefusable()
 
                 }
             }

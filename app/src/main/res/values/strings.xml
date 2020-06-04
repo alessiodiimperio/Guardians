@@ -26,5 +26,13 @@
     <string name="login_failed">"Login failed"</string>
     <string name="trigger">Trigger</string>
     <string name="defuse_bttn">Defuse Alarm</string>
+    <string name="testmode">Testmode</string>
+    <string name="active">Active</string>
+    <string name="alarm_defused">Alarm Defused</string>
+    <string name="wrong_pin">Wrong PIN</string>
+    <string name="insert_pin_to_defuse">Insert PIN to defuse Alarm</string>
+    <string name="allow_sms_notifications">Allow SMS Notifications</string>
+    <string name="prompt_send_sms_select_remember_allow">When adding contacts you will be asked to allow Guardians to send SMS. Check REMEMBER my choice and ALWAYS allow or your contacts might not receive your location alerts.</string>
+    <string name="guardians">Guardians</string>
 
 </resources>

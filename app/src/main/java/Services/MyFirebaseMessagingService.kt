@@ -1,24 +1,12 @@
-package models
+package Services
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
-import android.graphics.BitmapFactory
-import android.graphics.Color
-import android.media.RingtoneManager
-import android.os.Build
-import androidx.annotation.RequiresApi
-import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
-import com.google.firebase.messaging.RemoteMessage
-import se.diimperio.guardians.MainActivity
-import se.diimperio.guardians.R
-import kotlin.random.Random
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 /*
+    *** I decided not to implement this currently as i had to prioritize my time. ***
+
+
     private val ALARM_CHANNEL_ID = "alarm_channel"
 
     override fun onMessageReceived(p0: RemoteMessage) {

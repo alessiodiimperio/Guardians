@@ -2,19 +2,17 @@ package se.diimperio.guardians
 
 import Alarm.AlarmFragment
 import Alarm.AlertMapsFragment
+import Alarm.MAPS_FRAGMENT
 import Contacts.ContactsFragment
 import Login.LoginActivity
 import Settings.SettingsFragment
-import android.app.ActivityManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.KeyEvent
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.Button
@@ -23,11 +21,9 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.squareup.picasso.Picasso
-import models.AlarmMachine
-import models.AlarmManager
+import Managers.AlarmManager
 import models.User
-import models.UserManager
+import Managers.UserManager
 
 const val ALERT_NOTIFICATION_CHANNEL: String = "ALERT_CHANNEL"
 
@@ -39,8 +35,6 @@ class MainActivity() : AppCompatActivity() {
     lateinit var db: FirebaseFirestore
     lateinit var auth: FirebaseAuth
 
-    lateinit var alarmFragment: AlarmFragment
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -48,10 +42,7 @@ class MainActivity() : AppCompatActivity() {
         db = FirebaseFirestore.getInstance()
         auth = FirebaseAuth.getInstance()
 
-        //Initialize fragments for Main Activity
-        val contactsFragment = ContactsFragment()
-        alarmFragment = AlarmFragment()
-
+        //Initialize UI components
         activeAlertBttn = findViewById(R.id.active_alert_button)
         toolbar = findViewById(R.id.activity_toolbar)
         bottomNav = findViewById(R.id.bottom_navigation)
@@ -61,23 +52,26 @@ class MainActivity() : AppCompatActivity() {
 
         AlarmManager.setupAlarmListener(this, applicationContext)
 
-        val isSentFromAlertNotification = intent.getBooleanExtra("maps_fragment", false).apply {
-            Log.d("TEST", "this : $this")
-            if (this) {
-                Log.d("TEST", "Sent from notification show maps fragment")
-                val mapsFragment = AlertMapsFragment()
-                loadFragment(mapsFragment)
-                activeAlertBttn.visibility = GONE
-                toolbar.visibility = GONE
-            } else {
-                Log.d("TEST", "Not sent from notification start as usual")
+        val isSentFromAlertNotification =
+            intent.getBooleanExtra("load_maps_fragment", false).apply {
+                if (this) {
+                    val mapsFragment = AlertMapsFragment()
+                    loadFragment(mapsFragment, MAPS_FRAGMENT)
+
+                    activeAlertBttn.visibility = GONE
+                    toolbar.visibility = GONE
+
+                    Log.d("TEST", "Sent from notification show maps fragment")
+
+                } else {
+                    Log.d("TEST", "Not sent from notification start as usual")
+                }
             }
-        }
-        Log.d("TEST", "isSentFromNot: $isSentFromAlertNotification")
 
         activeAlertBttn.setOnClickListener {
             val mapsFragment = AlertMapsFragment()
-            loadFragment(mapsFragment)
+            loadFragment(mapsFragment, MAPS_FRAGMENT)
+
             activeAlertBttn.visibility = GONE
             toolbar.visibility = GONE
         }
@@ -85,48 +79,40 @@ class MainActivity() : AppCompatActivity() {
         bottomNav.setOnNavigationItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.alarm_menu_item -> {
-                    loadFragment(alarmFragment)
-                    if (AlarmManager.activeAlertsExists()) {
-                        activeAlertBttn.visibility = VISIBLE
-                    } else {
-                        activeAlertBttn.visibility = GONE
-                    }
+                    loadFragment(AlarmFragment())
+                    checkForActiveAlerts()
                     true
                 }
                 R.id.contacts_menu_item -> {
                     if (UserManager.currentUser.guardians.size < 1) {
-                        loadFragment(contactsFragment)
+                        loadFragment(ContactsFragment())
                     } else if (checkSelfPermission(android.Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
-                        loadFragment(contactsFragment)
+                        loadFragment(ContactsFragment())
                     } else {
                         requestPermissions(
                             arrayOf(android.Manifest.permission.READ_CONTACTS), 12345
                         )
                     }
-
-                    if (AlarmManager.activeAlertsExists()) {
-                        activeAlertBttn.visibility = VISIBLE
-                    } else {
-                        activeAlertBttn.visibility = GONE
-                    }
+                    checkForActiveAlerts()
                     true
                 }
                 R.id.settings_menu_item -> {
-                    if (AlarmManager.activeAlertsExists()) {
-                        activeAlertBttn.visibility = VISIBLE
-                    } else {
-                        activeAlertBttn.visibility = GONE
-                    }
+
                     loadFragment(SettingsFragment())
+                    checkForActiveAlerts()
+
                     true
                 }
                 else -> false
             }
         }
-        //Select middle menu ("alarm") on start
-        bottomNav.setSelectedItemId(
-            bottomNav.getMenu().getItem(1).itemId
-        )
+
+        //Select middle menu ("alarm") on start if not sent from notification
+        if (!isSentFromAlertNotification) {
+            bottomNav.setSelectedItemId(
+                bottomNav.getMenu().getItem(1).itemId
+            )
+        }
     }
 
     private fun createNotificationChannels() {
@@ -136,16 +122,16 @@ class MainActivity() : AppCompatActivity() {
                 "Guardian ALERT Channel",
                 NotificationManager.IMPORTANCE_HIGH
             )
-            notificationChannel.description = "A Guardian Alarm has been triggered nearby!"
+            notificationChannel.description = "Guardian Alerts"
             val notificationManager = getSystemService(NotificationManager::class.java)
-            notificationManager.createNotificationChannel(notificationChannel)
+            notificationManager?.createNotificationChannel(notificationChannel)
         }
     }
 
     private fun setupCurrentUser() {
         val currentUserId = auth.uid
 
-        if (currentUserId == null) {
+        if (currentUserId == null || currentUserId.isEmpty()) {
             val intent = Intent(this, LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK.or(Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
@@ -167,50 +153,37 @@ class MainActivity() : AppCompatActivity() {
         }
     }
 
-    fun loadFragment(fragment: Fragment) {
+    fun loadFragment(fragment: Fragment, tag: String? = null) {
         val transaction = supportFragmentManager.beginTransaction()
-        transaction.replace(R.id.container_layout, fragment).commit()
+        transaction.replace(R.id.container_layout, fragment, tag).commit()
     }
 
     fun checkForActiveAlerts() {
+        //Make active alert button visibleif alarms exist
         if (AlarmManager.activeAlertsExists()) {
-            activeAlertBttn.visibility = VISIBLE
+
+            val fragment = supportFragmentManager.findFragmentById(R.id.container_layout)
+            if(fragment != null && fragment.javaClass != AlertMapsFragment::class.java) {
+                activeAlertBttn.visibility = VISIBLE
+            }
+
         } else {
             activeAlertBttn.visibility = GONE
         }
     }
 
-    /*
-    ****************** Remapping keys.....
-     */
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        when (keyCode) {
-            KeyEvent.KEYCODE_VOLUME_UP -> Log.d("KEYOVERRIDE", "Vol Up pressed") // Active
-            KeyEvent.KEYCODE_VOLUME_DOWN -> Log.d("KEYOVERRIDE", "Vol Down pressed") // Active
-            KeyEvent.KEYCODE_VOLUME_MUTE -> Log.d("KEYOVERRIDE", "Vol Mute pressed") // Active
-            KeyEvent.KEYCODE_BACK -> Log.d("KEYOVERRIDE", "Back Pressed") //Active
-        }
-        return true
-    }
+    override fun onAttachFragment(fragment: Fragment) {
+        super.onAttachFragment(fragment)
 
-    override fun onUserLeaveHint() {
-        super.onUserLeaveHint()
-
-        if (alarmFragment.alarm.stateMachine.state == AlarmMachine.State.Alarming) {
-            (applicationContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).moveTaskToFront(
-                taskId,
-                0
-            )
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        if (alarmFragment.alarm.stateMachine.state == AlarmMachine.State.Alarming) {
-            (applicationContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).moveTaskToFront(
-                taskId,
-                0
-            )
+        //If an alarm object exists show alert button on all fragments except the maps fragment
+        if(AlarmManager.activeAlertsExists()){
+            if(fragment.javaClass != AlertMapsFragment::class.java){
+                Log.d("MAIN", "Fragment type is: $fragment make visible")
+                activeAlertBttn.visibility = VISIBLE
+        } else {
+                activeAlertBttn.visibility = GONE
+                Log.d("MAIN", "Fragment type is: $fragment make invisible")
+            }
         }
     }
 }

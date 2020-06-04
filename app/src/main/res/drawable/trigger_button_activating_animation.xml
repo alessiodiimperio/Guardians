@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<transition xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@drawable/trigger_button_start"/>
-    <item android:drawable="@drawable/trigger_button_activating_stop"/>
-</transition>
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android"
+    android:oneshot="true">
+    <item android:drawable="@drawable/trigger_button_activating_start" android:duration="6000"/>
+    <item android:drawable="@drawable/trigger_button_activating_stop" android:duration="1"/>
+</animation-list>

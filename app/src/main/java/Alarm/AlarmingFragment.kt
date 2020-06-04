@@ -44,6 +44,8 @@ class AlarmingFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        Toast.makeText(context, "Alarm is active - Notifying Guardians", Toast.LENGTH_LONG).show()
+
         //Get preferences
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         val testMode = sharedPreferences.getBoolean("testmode", false)
