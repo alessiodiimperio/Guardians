@@ -14,6 +14,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.iid.FirebaseInstanceId
 import Managers.UserManager
+import models.Guardian
 import se.diimperio.guardians.MainActivity
 import se.diimperio.guardians.R
 import kotlin.collections.HashMap
@@ -107,9 +108,9 @@ class RegisterActivity : AppCompatActivity() {
         UserManager.currentUser.uid = userId
         UserManager.currentUser.name = name
         UserManager.currentUser.email = email
-        UserManager.currentUser.mobilNR = number
+        UserManager.currentUser.number = number
         UserManager.currentUser.location = null
-        UserManager.currentUser.guardians = mutableListOf()
+        UserManager.currentUser.guardians = mutableListOf<Guardian>()
 
         FirebaseInstanceId.getInstance().instanceId.addOnSuccessListener {task->
             if(task != null){

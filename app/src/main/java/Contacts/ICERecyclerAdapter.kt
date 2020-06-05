@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.squareup.picasso.Picasso
 import Managers.UserManager
+import android.net.Uri
 import se.diimperio.guardians.R
 
 const val CONTACTS_ADAPTER: String = "CONTACTS_ADAPTER"
@@ -46,7 +47,7 @@ class ICERecyclerAdapter(private val context: Context) :
         }
 
         if (guardian.avatar != null) {
-            Picasso.get().load(guardian.avatar).into(holder.avatar)
+            Picasso.get().load(Uri.parse(guardian.avatar)).into(holder.avatar)
         } else {
             holder.avatar.setBackgroundResource(R.drawable.ic_person_accent)
         }

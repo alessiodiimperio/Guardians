@@ -30,14 +30,13 @@ class LoginActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
-        //UI Components
         progressBar = findViewById(R.id.login_loading)
         usernameEditText = findViewById(R.id.login_username)
         passwordEditText = findViewById(R.id.login_password)
+
         loginBttn = findViewById(R.id.login_button)
         registerBttn = findViewById(R.id.register_button)
 
-        //If logged in before proceed to main activity
         if (auth.uid != null){
             goToMainActivity()
         }

@@ -113,7 +113,8 @@ class MainActivity() : AppCompatActivity() {
     }
 
     private fun setupCurrentUser() {
-        val currentUserId = auth.uid
+
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
 
         if (currentUserId == null || currentUserId.isEmpty()) {
             val intent = Intent(this, LoginActivity::class.java)
@@ -123,12 +124,12 @@ class MainActivity() : AppCompatActivity() {
             val profileRef = db.collection("users").document("$currentUserId")
             profileRef.addSnapshotListener { snapshot, firebaseFirestoreException ->
                 if (snapshot != null) {
-                    val user = snapshot.toObject(User::class.java)
+                    val user = snapshot?.toObject(User::class.java)
                     val userData = user ?: return@addSnapshotListener
 
                     UserManager.currentUser.uid = userData.uid
                     UserManager.currentUser.email = userData.email
-                    UserManager.currentUser.mobilNR = userData.mobilNR
+                    UserManager.currentUser.number = userData.number
                     UserManager.currentUser.name = userData.name
                     UserManager.currentUser.guardians = userData.guardians
                     UserManager.currentUser.location = userData.location
