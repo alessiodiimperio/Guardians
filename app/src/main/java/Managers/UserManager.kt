@@ -6,6 +6,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
+import android.net.Uri
 import android.os.Looper
 import android.telephony.SmsManager
 import android.util.Log
@@ -14,11 +15,13 @@ import androidx.core.content.ContextCompat.checkSelfPermission
 import com.google.android.gms.location.*
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.iid.FirebaseInstanceId
+import com.google.firebase.storage.FirebaseStorage
 import models.Guardian
 import models.MyLatLng
 import models.User
 import models.emailToUidObject
 import se.diimperio.guardians.RequestCodes
+import java.util.*
 
 
 object UserManager {
@@ -38,10 +41,10 @@ object UserManager {
 
     lateinit var locationProviderClient: FusedLocationProviderClient
     lateinit var locationCallBack: LocationCallback
-    lateinit var singleLocationProvider:FusedLocationProviderClient
-    lateinit var singleLocationCallback:LocationCallback
+    lateinit var singleLocationProvider: FusedLocationProviderClient
+    lateinit var singleLocationCallback: LocationCallback
 
-    fun syncGuardianUids(callback:(()->Unit)) {
+    fun syncGuardianUids(callback: (() -> Unit)) {
         val emailToUidRef = db.collection("emailToUid")
 
         var requestCount = 0
@@ -77,7 +80,8 @@ object UserManager {
                     requestCount += 1
                     if (requestCount == currentUser.guardians.size) {
                         Log.d(USER_MANAGER, "syncing after request")
-                        callback.invoke()                    }
+                        callback.invoke()
+                    }
                 }
             } else {
                 requestCount += 1
@@ -162,9 +166,9 @@ object UserManager {
             locationCallBack
         ).addOnSuccessListener {
             Log.d(USER_MANAGER, "Removed location updates Success")
-        }.addOnFailureListener {error->
-                Log.d(USER_MANAGER, "Error stoping location $error")
-            }
+        }.addOnFailureListener { error ->
+            Log.d(USER_MANAGER, "Error stoping location $error")
+        }
     }
 
     private fun checkPermissions(context: Context): Boolean {
@@ -260,5 +264,24 @@ object UserManager {
         } else {
             requestPermissions(activity)
         }
+    }
+
+    fun uploadImageToFirebaseStorage(photoUri: Uri, callback: (photoUri: Uri) -> Unit) {
+        if (photoUri == null) return
+
+        val filename = UUID.randomUUID().toString()
+        val imagesRef = FirebaseStorage.getInstance().getReference("/images/$filename")
+
+        imagesRef.putFile(photoUri)
+            .addOnSuccessListener {
+                Log.d(USER_MANAGER, "Image uploaded: ${it.metadata?.path}")
+
+                imagesRef.downloadUrl.addOnSuccessListener { url ->
+                    callback.invoke(url)
+                }
+            }
+            .addOnFailureListener {
+                Log.d(USER_MANAGER, "Failed to upload image")
+            }
     }
 }

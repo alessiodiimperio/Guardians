@@ -106,19 +106,24 @@ class AddGuardian : AppCompatActivity() {
         if (resultCode == Activity.RESULT_OK) {
             when (requestCode) {
                 RequestCodes.GALLERY_REQUEST_CODE -> {
-
                     val selectedImage = data?.data
 
                     if (selectedImage != null) {
-                        uploadImageToFirebaseStorage(selectedImage) { url ->
-                            Picasso.get().load(url).into(guardianAvatar)
-                            avatarURI = selectedImage.toString()
-                        }
+                        Picasso.get().load(selectedImage).into(guardianAvatar)
+                        avatarURI = selectedImage.toString()
                     }
                 }
                 RequestCodes.REQUEST_CONTACT_READ -> {
                     val contactUri = data?.data ?: return
-                    getContactInfo(contactUri)
+
+                    getContactInfo(contactUri) { photoUri ->
+                        if (photoUri != null) {
+                            Picasso.get().load(photoUri).into(guardianAvatar)
+                            avatarURI = photoUri
+                        } else {
+                            guardianAvatar.setImageResource(R.drawable.ic_person_accent)
+                        }
+                    }
                 }
             }
         }
@@ -144,7 +149,7 @@ class AddGuardian : AppCompatActivity() {
             }
     }
 
-    private fun getContactInfo(contactUri: Uri) {
+    private fun getContactInfo(contactUri: Uri, callback: (photoUri: String?) -> Unit) {
 
         //Select datatypes to aquire
         val projection = arrayOf(
@@ -156,6 +161,7 @@ class AddGuardian : AppCompatActivity() {
 
         //Resolve data of projected type
         val cursor = contentResolver.query(contactUri, projection, null, null, null)
+
         //val emailCursor = contentResolver.query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, emailProjection, null,null,null)
 
         //Parse resolvable data to strings
@@ -167,24 +173,21 @@ class AddGuardian : AppCompatActivity() {
             avatarURI =
                 cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_URI))
 
+            //Set to UI Elements
+            guardianName.setText(name)
+            guardianNumber.setText(number)
+
+            callback.invoke(avatarURI)
+
             /*
             if(emailCursor!!.moveToFirst()){
                 val email = emailCursor.getString(emailCursor.getColumnIndex((ContactsContract.CommonDataKinds.Email.DATA1)))
                 guardianEmail.setText(email)
             }
              */
-
-            //Set to UI Elements
-            guardianName.setText(name)
-            guardianNumber.setText(number)
-
-            if (avatarURI != null) {
-                Picasso.get().load(avatarURI).into(guardianAvatar)
-            } else {
-                guardianAvatar.setImageResource(R.drawable.ic_person_accent)
-            }
         }
         cursor.close()
+
         //emailCursor?.close()
     }
 
@@ -206,7 +209,6 @@ class AddGuardian : AppCompatActivity() {
             } else {
 
                 val smsManager = SmsManager.getDefault()
-
                 val alert =
                     "${UserManager.currentUser.name} added you to their list of \"Guardians\". This SMS is a test to ensure you receive their alerts."
 
@@ -218,17 +220,19 @@ class AddGuardian : AppCompatActivity() {
 
             //Create new guardian w/o avatar if avatar is null
             if (avatarURI != null) {
-                val newGuardian = Guardian(
-                    null,
-                    avatarURI,
-                    guardianName.text.toString(),
-                    guardianNumber.text.toString(),
-                    guardianRelation.selectedItem.toString(),
-                    guardianEmail.text.toString()
-                )
-                UserManager.addGuardian(newGuardian)
-                progressBar.visibility = GONE
-                finish()
+                uploadImageToFirebaseStorage(Uri.parse(avatarURI)){ link->
+                    val newGuardian = Guardian(
+                        null,
+                        link.toString(),
+                        guardianName.text.toString(),
+                        guardianNumber.text.toString(),
+                        guardianRelation.selectedItem.toString(),
+                        guardianEmail.text.toString()
+                    )
+                    UserManager.addGuardian(newGuardian)
+                    progressBar.visibility = GONE
+                    finish()
+                }
             } else {
                 val newGuardian = Guardian(
                     null,

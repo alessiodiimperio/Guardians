@@ -139,7 +139,7 @@ class EditGuardian : AppCompatActivity() {
                     val selectedImage = data?.data
 
                     if(selectedImage != null){
-                        uploadImageToFirebaseStorage(selectedImage){ url->
+                        UserManager.uploadImageToFirebaseStorage(selectedImage){ url ->
                             Picasso.get().load(url).into(guardianAvatarImageView)
                             UserManager.currentUser.guardians[position].avatar = url.toString()
                             UserManager.syncChangesToFirebase()
@@ -150,22 +150,5 @@ class EditGuardian : AppCompatActivity() {
         }
     }
 
-    private fun uploadImageToFirebaseStorage(photoUri:Uri, callback:(photoUri:Uri)->Unit) {
-        if (photoUri == null) return
 
-        val filename = UUID.randomUUID().toString()
-        val imagesRef = FirebaseStorage.getInstance().getReference("/images/$filename")
-
-        imagesRef.putFile(photoUri)
-            .addOnSuccessListener {
-                Log.d(EDIT_GUARDIAN,"Image uploaded: ${it.metadata?.path}")
-
-                imagesRef.downloadUrl.addOnSuccessListener { url->
-                    callback.invoke(url)
-                }
-            }
-            .addOnFailureListener {
-                Log.d(EDIT_GUARDIAN, "Failed to upload image")
-            }
-    }
 }

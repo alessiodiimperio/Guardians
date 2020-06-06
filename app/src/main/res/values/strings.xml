@@ -34,5 +34,6 @@
     <string name="allow_sms_notifications">Allow SMS Notifications</string>
     <string name="prompt_send_sms_select_remember_allow">When adding contacts you will be asked to allow Guardians to send SMS. Check REMEMBER my choice and ALWAYS allow or your contacts might not receive your location alerts.</string>
     <string name="guardians">Guardians</string>
+    <string name="forgot_password"><u>Forgot Password</u></string>
 
 </resources>
